@@ -1,0 +1,74 @@
+<?xml version="1.0"?>
+<config>
+  <modules>
+    <Siel_Acumulus>
+      <version>3.0.0</version>
+    </Siel_Acumulus>
+  </modules>
+
+  <stores>
+    <admin>
+      <dev>
+        <debug>
+          <template_hints>0</template_hints>
+          <template_hints_blocks>0</template_hints_blocks>
+        </debug>
+      </dev>
+    </admin>
+  </stores>
+
+  <global>
+    <models>
+      <acumulus>
+        <class>Siel_Acumulus_Model</class>
+      </acumulus>
+    </models>
+
+    <blocks>
+      <acumulus>
+        <class>Siel_Acumulus_Block</class>
+      </acumulus>
+    </blocks>
+
+    <helpers>
+      <acumulus>
+        <class>Siel_Acumulus_Helper</class>
+      </acumulus>
+    </helpers>
+
+    <events>
+      <sales_order_save_after>
+        <observers>
+          <Siel_Acumulus_order_observer>
+            <type>singleton</type>
+            <class>acumulus/order_observer</class>
+            <method>saveAfter</method>
+          </Siel_Acumulus_order_observer>
+        </observers>
+      </sales_order_save_after>
+    </events>
+  </global>
+
+  <admin>
+    <routers>
+      <adminhtml>
+        <args>
+          <modules>
+            <acumulus before="Mage_Adminhtml">Siel_Acumulus_Adminhtml</acumulus>
+          </modules>
+        </args>
+      </adminhtml>
+    </routers>
+  </admin>
+
+  <adminhtml>
+    <layout>
+      <updates>
+        <acumulus>
+          <file>acumulus.xml</file>
+        </acumulus>
+      </updates>
+    </layout>
+  </adminhtml>
+
+</config>

@@ -1,0 +1,11 @@
+# patches, diffs, merges
+*.patch
+interdiff.txt
+*.orig
+*.bak
+
+# PHPStorm
+.idea/*
+
+# Ignore library
+**/Siel/Acumulus/Common

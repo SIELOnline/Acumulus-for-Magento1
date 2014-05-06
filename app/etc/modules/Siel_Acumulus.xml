@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<config>
+  <modules>
+    <Siel_Acumulus>
+      <active>true</active>
+      <codePool>community</codePool>
+    </Siel_Acumulus>
+  </modules>
+</config>
