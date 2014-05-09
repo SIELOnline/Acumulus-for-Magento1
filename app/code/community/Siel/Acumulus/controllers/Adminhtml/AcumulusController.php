@@ -6,6 +6,11 @@ class Siel_Acumulus_Adminhtml_AcumulusController extends Mage_Adminhtml_Controll
   /** @var MagentoAcumulusConfig */
   private $acumulusConfig;
 
+  protected function _construct() {
+    $this->acumulusConfig = Mage::helper('acumulus')->getAcumulusConfig();
+  }
+
+
   protected function _isAllowed() {
     return Mage::getSingleton('admin/session')->isAllowed('system/acumulus_configform');
   }
@@ -22,7 +27,6 @@ class Siel_Acumulus_Adminhtml_AcumulusController extends Mage_Adminhtml_Controll
 
         /* Process the submitted form */
         $values = array();
-        $this->acumulusConfig = Mage::helper('acumulus')->getAcumulusConfig();
         foreach ($this->acumulusConfig->getKeys() as $key) {
           if (isset($post[$key])) {
             $values[$key] = $post[$key];
@@ -31,20 +35,18 @@ class Siel_Acumulus_Adminhtml_AcumulusController extends Mage_Adminhtml_Controll
               $values[$key] = $this->acumulusConfig->get('password');
             }
           }
-          else if ($key === 'overwriteIfExists' && isset($post['defaultCustomerType'])) {
+          else if (($key === 'genericCustomer' || $key === 'overwriteIfExists') && isset($post['defaultCustomerType'])) {
             // Not checked checkboxes are not set at all in the post values.
             // Set the unchecked value if it was available on the form
             $values[$key] = 0;
           }
         }
-        if ($this->processForm($values)) {
-          if ($values['password']) {
-            $message = Mage::helper('acumulus')->checkAccountSettings();
-            if (is_string($message)) {
-              Mage::getSingleton('adminhtml/session')->addError($message);
-            }
+        $this->processForm($values);
+        if ($values['password']) {
+          $message = Mage::helper('acumulus')->checkAccountSettings();
+          if (is_string($message)) {
+            Mage::getSingleton('adminhtml/session')->addError($message);
           }
-          Mage::getSingleton('adminhtml/session')->addSuccess($this->t('message_config_saved'));
         }
       } catch (Exception $e) {
         Mage::getSingleton('adminhtml/session')->addError($e->getMessage());
@@ -68,6 +70,7 @@ class Siel_Acumulus_Adminhtml_AcumulusController extends Mage_Adminhtml_Controll
     if ($result = $this->validateForm($values, $output)) {
       $this->acumulusConfig->castValues($values);
       $this->acumulusConfig->save($values);
+      Mage::getSingleton('adminhtml/session')->addSuccess($this->t('message_config_saved'));
     }
     return $result;
   }
@@ -91,5 +94,17 @@ class Siel_Acumulus_Adminhtml_AcumulusController extends Mage_Adminhtml_Controll
   private function t($key) {
     return Mage::helper('acumulus')->t($key);
   }
+
+//  public function testAction() {
+//    $this->_title($this->__('System'))->_title('Test Page');
+//
+//    /** @var Mage_Sales_Model_Order_Creditmemo $model */
+//    $model = Mage::getModel('sales/order_creditmemo');
+//
+//    /** @var Siel_Acumulus_Model_Order_Observer $observer */
+//    $observer = Mage::getModel('acumulus/order_observer');
+//    $observer->sendCreditMemoToAcumulus($model->load(8));
+//  }
+
 }
 

@@ -42,10 +42,20 @@
           <Siel_Acumulus_order_observer>
             <type>singleton</type>
             <class>acumulus/order_observer</class>
-            <method>saveAfter</method>
+            <method>orderSaveAfter</method>
           </Siel_Acumulus_order_observer>
         </observers>
       </sales_order_save_after>
+
+      <sales_order_creditmemo_save_after>
+        <observers>
+          <Siel_Acumulus_order_observer>
+            <type>singleton</type>
+            <class>acumulus/order_observer</class>
+            <method>creditMemoSaveAfter</method>
+          </Siel_Acumulus_order_observer>
+        </observers>
+      </sales_order_creditmemo_save_after>
     </events>
   </global>
 
@@ -60,15 +70,5 @@
       </adminhtml>
     </routers>
   </admin>
-
-  <adminhtml>
-    <layout>
-      <updates>
-        <acumulus>
-          <file>acumulus.xml</file>
-        </acumulus>
-      </updates>
-    </layout>
-  </adminhtml>
 
 </config>

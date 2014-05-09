@@ -62,7 +62,6 @@ class MagentoAcumulusConfig extends BaseConfig {
       }
     }
     Mage::getConfig()->reinit();
-//    Mage::app()->reinitStores();
     return parent::save($values);
   }
 }

@@ -90,7 +90,7 @@ class Siel_Acumulus_Block_Adminhtml_Settings_Form extends Mage_Adminhtml_Block_W
     }
     else {
       $fieldset->addField('note2b', 'note', array(
-        'text' => '<style> input[type=radio] { float: left; clear: both; margin-top: 0.2em;} label.inline {float: left !important; padding-left: 1em;} .note {clear: both;}</style>',
+        'text' => '<style> input[type=radio] { float: left; clear: both; margin-top: 0.2em;} .value label.inline {float: left !important; max-width: 95%; padding-left: 1em;} .note {clear: both;}</style>',
       ));
 
       // Show invoice settings.
@@ -145,6 +145,27 @@ class Siel_Acumulus_Block_Adminhtml_Settings_Form extends Mage_Adminhtml_Block_W
         'values' => $options,
         'required' => FALSE,
       ));
+
+      $fieldset->addField('genericCustomer', 'checkboxes', array(
+        'label' => $this->t('field_genericCustomer'),
+        'name' => 'genericCustomer',
+        'values' => array(
+          array(
+            'value' => 1,
+            'label' => $this->t('option_genericCustomer'),
+          ),
+        ),
+        'after_element_html' => $this->getNote('desc_genericCustomer'),
+      ));
+
+      $fieldset->addField('genericCustomerEmail', 'text', array(
+          'name' => 'genericCustomerEmail',
+          'label' => $this->t('field_genericCustomerEmail'),
+          'title' => $this->t('field_genericCustomerEmail'),
+          'after_element_html' => $this->getNote('desc_genericCustomerEmail'),
+          'required' => FALSE,
+        )
+      );
 
       $fieldset->addField('overwriteIfExists', 'checkboxes', array(
         'label' => $this->t('field_overwriteIfExists'),
