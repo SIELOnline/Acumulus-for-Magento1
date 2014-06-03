@@ -161,11 +161,14 @@ class Siel_Acumulus_Model_CreditInvoiceAdd extends Siel_Acumulus_Model_InvoiceAd
   }
 
   protected function addShippingLine(Mage_Sales_Model_Order_Creditmemo $creditMemo) {
+    // For higher precision, we use the prices as entered by the admin.
+    $vatRate = round(100.0 * $creditMemo->getShippingTaxAmount() / $creditMemo->getShippingAmount());
+    $unitPrice = $this->productPricesIncludeTax() ? $creditMemo->getShippingInclTax() / (100 + $vatRate) * 100 : $creditMemo->getShippingAmount();
     return array(
       'itemnumber' => '',
       'product' => $this->acumulusConfig->t('shipping_costs'),
-      'unitprice' => number_format(-$creditMemo->getShippingAmount(), 4, '.', ''),
-      'vatrate' => number_format(100.0 * $creditMemo->getShippingTaxAmount() / $creditMemo->getShippingAmount(), 0),
+      'unitprice' => number_format(-$unitPrice, 4, '.', ''),
+      'vatrate' => number_format($vatRate, 0),
       'quantity' => 1,
     );
   }

@@ -182,6 +182,35 @@ class Siel_Acumulus_Model_InvoiceAdd extends Siel_Acumulus_Model_InvoiceAddBase 
   }
 
   /**
+   * All shipping costs are collected in 1 line as we only have shipping totals.
+   *
+   * @param Mage_Sales_Model_Order $order
+   *
+   * @return array
+   *   0 or 1 shipping lines.
+   */
+  protected function addShippingLines(Mage_Sales_Model_Order $order) {
+    $result = array();
+    if ($order->getShippingAmount()) {
+      $result[] = $this->addShippingLine($order);
+    }
+    return $result;
+  }
+
+  protected function addShippingLine(Mage_Sales_Model_Order $order) {
+    // For higher precision, we use the prices as entered by the admin.
+    $vatRate = round(100.0 * $order->getShippingTaxAmount() / $order->getShippingAmount());
+    $unitPrice = $this->productPricesIncludeTax() ? $order->getShippingInclTax() / (100 + $vatRate) * 100 : $order->getShippingAmount();
+    return array(
+      'itemnumber' => '',
+      'product' => $this->acumulusConfig->t('shipping_costs'),
+      'unitprice' => number_format($unitPrice, 4, '.', ''),
+      'vatrate' => number_format($vatRate, 0),
+      'quantity' => 1,
+    );
+  }
+
+  /**
    * All discount costs are collected in 1 line as we only have discount totals.
    *
    * @param Mage_Sales_Model_Order $order
@@ -213,32 +242,6 @@ class Siel_Acumulus_Model_InvoiceAdd extends Siel_Acumulus_Model_InvoiceAddBase 
       'product' => $order->getCouponCode() ? $this->acumulusConfig->t('discount_code') . ' ' . $order->getCouponCode() : $this->acumulusConfig->t('discount'),
       'unitprice' => number_format($amount - $tax, 4, '.', ''),
       'vatrate' => number_format(100.0 * $tax / ($amount - $tax), 0),
-      'quantity' => 1,
-    );
-  }
-
-  /**
-   * All shipping costs are collected in 1 line as we only have shipping totals.
-   *
-   * @param Mage_Sales_Model_Order $order
-   *
-   * @return array
-   *   0 or 1 shipping lines.
-   */
-  protected function addShippingLines(Mage_Sales_Model_Order $order) {
-    $result = array();
-    if ($order->getShippingAmount()) {
-      $result[] = $this->addShippingLine($order);
-    }
-    return $result;
-  }
-
-  protected function addShippingLine(Mage_Sales_Model_Order $order) {
-    return array(
-      'itemnumber' => '',
-      'product' => $this->acumulusConfig->t('shipping_costs'),
-      'unitprice' => number_format($order->getShippingAmount(), 4, '.', ''),
-      'vatrate' => number_format(100.0 * $order->getShippingTaxAmount() / $order->getShippingAmount(), 0),
       'quantity' => 1,
     );
   }

@@ -6,7 +6,7 @@
         <acumulus_settings_form translate="title" module="acumulus">
           <title>Acumulus instellingen</title>
           <action>adminhtml/acumulus/settings</action>
-          <sort_order>115</sort_order>
+          <sort_order>15</sort_order>
         </acumulus_settings_form>
         <!--<acumulus_test translate="title" module="acumulus">-->
           <!--<title>Acumulus test</title>-->
