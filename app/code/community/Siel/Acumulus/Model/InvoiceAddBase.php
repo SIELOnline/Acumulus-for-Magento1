@@ -163,6 +163,16 @@ class Siel_Acumulus_Model_InvoiceAddBase {
   }
 
   /**
+   * @return bool
+   *   Whether the prices for the products are entered with or without tax.
+   */
+  protected function productPricesIncludeTax() {
+    /** @var Mage_Tax_Model_Config $taxConfig */
+    $taxConfig = Mage::getModel('tax/config');
+    return $taxConfig->priceIncludesTax();
+  }
+
+  /**
    * Returns whether the margin scheme should be used for this product.
    *
    * Note: with a standard Prestashop install, the margin scheme is not

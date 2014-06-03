@@ -124,19 +124,22 @@ class Siel_Acumulus_Model_CreditInvoiceAdd extends Siel_Acumulus_Model_InvoiceAd
     $result['product'] = $item->getName();
     $this->addIfNotEmpty($result, 'itemnumber', $item->getSku());
 
+    $vatRate = round(100.0 * $item->getTaxAmount() / $item->getPrice());
     if ($this->useMarginScheme($item)) {
-      // Use price with VAT.
+      // Send price with VAT.
       $result['unitprice'] = number_format(-$item->getPriceInclTax(), 4, '.', '');
       // Costprice > 0 is the trigger for Acumulus to use the margin scheme.
       $result['costprice'] = number_format(-$item->getBaseCost(), 4, '.', '');
     }
     else {
-      // Use price without VAT.
-      $result['unitprice'] = number_format(-$item->getPrice(), 4, '.', '');
+      // Send price without VAT.
+      // For higher precision, we use the prices as entered by the admin.
+      $unitPrice = $this->productPricesIncludeTax() ? $item->getPriceInclTax() / (100 + $vatRate) * 100 : $item->getPrice();
+      $result['unitprice'] = number_format(-$unitPrice, 4, '.', '');
     }
 
     $result['quantity'] = number_format($item->getQty(), 2, '.', '');
-    $result['vatrate'] = number_format(100.0 * $item->getTaxAmount() / $item->getPrice(), 0);
+    $result['vatrate'] = number_format($vatRate, 0);
 
     return $result;
   }

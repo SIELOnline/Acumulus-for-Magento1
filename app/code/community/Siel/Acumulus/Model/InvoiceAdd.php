@@ -162,8 +162,10 @@ class Siel_Acumulus_Model_InvoiceAdd extends Siel_Acumulus_Model_InvoiceAddBase 
         $result['costprice'] = number_format($line->getBaseCost(), 4, '.', '');
       }
       else {
-        // Use price without VAT.
-        $result['unitprice'] = number_format($line->getPrice(), 4, '.', '');
+        // Send price without VAT.
+        // For higher precision, we use the prices as entered by the admin.
+        $unitPrice = $this->productPricesIncludeTax() ? $line->getPriceInclTax() / (100 + $line->getTaxPercent()) * 100 : $line->getPrice();
+        $result['unitprice'] = number_format($unitPrice, 4, '.', '');
       }
 
       $result['quantity'] = number_format($line->getQtyOrdered(), 2, '.', '');
