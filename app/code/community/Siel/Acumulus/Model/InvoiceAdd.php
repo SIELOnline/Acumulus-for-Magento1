@@ -173,7 +173,16 @@ class Siel_Acumulus_Model_InvoiceAdd extends Siel_Acumulus_Model_InvoiceAddBase 
       $result = array($result);
     }
     else {
-      // Composed products without tax or price information: add a line per child.
+      // Composed products without tax or price information: add a summary line
+      // with price 0 and a line per child item.
+      $bundleLine = array(
+        'itemnumber' => $line->getSku() ? $line->getSku() : '',
+        'product' => $line->getName(),
+        'unitprice' => number_format(0, 0, '.', ''),
+        'vatrate' => number_format(0, 0),
+        'quantity' => number_format($line->getQtyOrdered(), 2, '.', ''),
+      );
+      $result = array($bundleLine);
       foreach($line->getChildrenItems() as $child) {
         $result = array_merge($result, $this->addLineItem($child));
       }
