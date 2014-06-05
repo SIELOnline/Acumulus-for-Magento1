@@ -163,7 +163,8 @@ class Siel_Acumulus_Model_InvoiceAdd extends Siel_Acumulus_Model_InvoiceAddBase 
       // Margin scheme:
       // - Do not put VAT on invoice: send price incl VAT as unitprice.
       // - But still send the VAT rate to Acumulus.
-      $result['unitprice'] = number_format($line->getPriceInclTax(), 4, '.', '');
+      $unitPrice = $line->getPriceInclTax();
+      $result['unitprice'] = number_format($unitPrice, 4, '.', '');
       // Costprice > 0 is the trigger for Acumulus to use the margin scheme.
       $result['costprice'] = number_format($line->getBaseCost(), 4, '.', '');
     }
@@ -209,17 +210,14 @@ class Siel_Acumulus_Model_InvoiceAdd extends Siel_Acumulus_Model_InvoiceAddBase 
           }
         }
 
-        if ($vatRate !== null) {
-          // Same vat: move price and vat info to bundle line and remove it from
-          // child lines (to prevent accounting amounts twice).
-          $amount = 0.0;
+        if ($vatRate !== null && $vatRate == $result['vatrate'] && $unitPrice != 0.0) {
+          // Bundle has price info and same vat as ALL children: use price and
+          // vat info from bundle line and remove it from child lines to prevent
+          // accounting amounts twice.
           foreach ($childLines as &$childLine) {
-            $amount += $childLine['unitprice'] * $childLine['quantity'] / $result['quantity'];
             $childLine['unitprice'] = 0;
             $childLine['vatrate'] = -1;
           }
-          $result['unitprice'] = $amount;
-          $result['vatrate'] = $vatRate;
         }
         else {
           // All price and vat info is/remains on the child lines.
