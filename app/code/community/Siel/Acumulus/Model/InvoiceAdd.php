@@ -135,58 +135,102 @@ class Siel_Acumulus_Model_InvoiceAdd extends Siel_Acumulus_Model_InvoiceAddBase 
   }
 
   /**
+   * Get an (array of) invoice line(s) for the current order line.
+   *
+   * As Magento supports bundles, 1 order line may comprise multiple invoice
+   * lines. Whether the price and vat info is specified on the bundle or on the
+   * children depends on the situation:
+   * - does the bundle have price and vat info on itself?
+   * - do all child lines have the same vat rate?
+   *
    * @param \Mage_Sales_Model_Order_Item $line
    *
    * @return array
    */
   protected function addLineItem(Mage_Sales_Model_Order_Item $line) {
     $result = array();
+    $childLines = array();
 
-    // Add as 1 line:
-    // - Simple products (products without children)
-    // - Composed products that have price and tax info available.
-    if (count($line->getChildrenItems()) == 0 || ($line->getPrice() > 0.0 && ($line->getTaxPercent() > 0.0 || $line->getTaxAmount() == 0.0))) {
-      $result['product'] = $line->getName();
-      $this->addIfNotEmpty($result, 'itemnumber', $line->getSku());
+    // Simple products (products without children): add as 1 line.
+    $result['product'] = $line->getName();
+    $this->addIfNotEmpty($result, 'itemnumber', $line->getSku());
 
-      // Magento does not support the margin scheme. So in a standard install
-      // this method will always return false. But if this method happens to
-      // return true anyway (customisation, hook), the costprice will trigger
-      // vattype = 5 for Acumulus.
-      if ($this->useMarginScheme($line)) {
-        // Margin scheme:
-        // - Do not put VAT on invoice: send price incl VAT as unitprice.
-        // - But still send the VAT rate to Acumulus.
-        $result['unitprice'] = number_format($line->getPriceInclTax(), 4, '.', '');
-        // Costprice > 0 is the trigger for Acumulus to use the margin scheme.
-        $result['costprice'] = number_format($line->getBaseCost(), 4, '.', '');
-      }
-      else {
-        // Send price without VAT.
-        // For higher precision, we use the prices as entered by the admin.
-        $unitPrice = $this->productPricesIncludeTax() ? $line->getPriceInclTax() / (100 + $line->getTaxPercent()) * 100 : $line->getPrice();
-        $result['unitprice'] = number_format($unitPrice, 4, '.', '');
-      }
-
-      $result['quantity'] = number_format($line->getQtyOrdered(), 2, '.', '');
-      $result['vatrate'] = number_format($line->getTaxPercent(), 0);
-      $result = array($result);
+    // Magento does not support the margin scheme. So in a standard install
+    // this method will always return false. But if this method happens to
+    // return true anyway (customisation, hook), the costprice will trigger
+    // vattype = 5 for Acumulus.
+    if ($this->useMarginScheme($line)) {
+      // Margin scheme:
+      // - Do not put VAT on invoice: send price incl VAT as unitprice.
+      // - But still send the VAT rate to Acumulus.
+      $result['unitprice'] = number_format($line->getPriceInclTax(), 4, '.', '');
+      // Costprice > 0 is the trigger for Acumulus to use the margin scheme.
+      $result['costprice'] = number_format($line->getBaseCost(), 4, '.', '');
     }
     else {
-      // Composed products without tax or price information: add a summary line
-      // with price 0 and a line per child item.
-      $bundleLine = array(
-        'itemnumber' => $line->getSku() ? $line->getSku() : '',
-        'product' => $line->getName(),
-        'unitprice' => number_format(0, 0, '.', ''),
-        'vatrate' => number_format(0, 0),
-        'quantity' => number_format($line->getQtyOrdered(), 2, '.', ''),
-      );
-      $result = array($bundleLine);
+      // Normal case: send price without VAT.
+      // For higher precision, we use the prices as entered by the admin.
+      $unitPrice = $this->productPricesIncludeTax() ? $line->getPriceInclTax() / (100 + $line->getTaxPercent()) * 100 : $line->getPrice();
+      $result['unitprice'] = number_format($unitPrice, 4, '.', '');
+    }
+
+    $result['quantity'] = number_format($line->getQtyOrdered(), 2, '.', '');
+    $result['vatrate'] = number_format($line->getTaxPercent(), 0);
+
+    if (count($line->getChildrenItems()) > 0) {
+      // Composed product: also add child lines, a.o. to be able to print a
+      // packing slip in Acumulus.
       foreach($line->getChildrenItems() as $child) {
-        $result = array_merge($result, $this->addLineItem($child));
+        $childLines[] = reset($this->addLineItem($child));
+      }
+
+      if ($line->getPriceInclTax() > 0.0 && ($line->getTaxPercent() > 0 || $line->getTaxAmount() == 0.0)) {
+        // If the bundle line contains valid price and tax info, we remove that
+        // info from all child lines (to prevent accounting amounts twice).
+        foreach ($childLines as &$childLine) {
+          $childLine['unitprice'] = 0;
+          $childLine['vatrate'] = -1;
+        }
+      }
+      else {
+        // Do all children have the same vat?
+        $vatRate = null;
+        foreach ($childLines as $childLine) {
+          // Check if this is not an empty price/vat line.
+          if ($childLine['unitprice'] != 0 && $childLine['vatrate'] !== -1) {
+            // Same vat?
+            if ($vatRate === null || $childLine['vatrate'] === $vatRate) {
+              $vatRate = $childLine['vatrate'];
+            }
+            else {
+              $vatRate = null;
+              break;
+            }
+          }
+        }
+
+        if ($vatRate !== null) {
+          // Same vat: move price and vat info to bundle line and remove it from
+          // child lines (to prevent accounting amounts twice).
+          $amount = 0.0;
+          foreach ($childLines as &$childLine) {
+            $amount += $childLine['unitprice'] * $childLine['quantity'] / $result['quantity'];
+            $childLine['unitprice'] = 0;
+            $childLine['vatrate'] = -1;
+          }
+          $result['unitprice'] = $amount;
+          $result['vatrate'] = $vatRate;
+        }
+        else {
+          // All price and vat info is/remains on the child lines.
+          // Make sure no price and vat info is left on the bundle line.
+          $result['unitprice'] = 0;
+          $result['vatrate'] = -1;
+        }
       }
     }
+
+    $result = array_merge(array($result), $childLines);
     return $result;
   }
 

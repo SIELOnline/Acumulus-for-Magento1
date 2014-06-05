@@ -138,45 +138,45 @@ class Siel_Acumulus_Block_Adminhtml_Settings_Form extends Mage_Adminhtml_Block_W
         'class' => 'validate-one-required-by-name',
       ));
 
+      $fieldset->addField('clientData', 'checkboxes', array(
+        'label' => $this->t('field_clientData'),
+        'name' => 'clientData[]',
+        'values' => array(
+          array(
+            'value' => 'sendCustomer',
+            'label' => $this->t('option_sendCustomer'),
+          ),
+          array(
+            'value' => 'overwriteIfExists',
+            'label' => $this->t('option_overwriteIfExists'),
+          ),
+        ),
+        'after_element_html' => $this->getNote('desc_clientData'),
+      ));
+
+//      $fieldset->addField('genericCustomerEmail', 'text', array(
+//          'name' => 'genericCustomerEmail',
+//          'label' => $this->t('field_genericCustomerEmail'),
+//          'title' => $this->t('field_genericCustomerEmail'),
+//          'after_element_html' => $this->getNote('desc_genericCustomerEmail'),
+//          'required' => FALSE,
+//        )
+//      );
+
+//      $fieldset->addField('overwriteIfExists', 'checkboxes', array(
+//        'label' => $this->t('field_overwriteIfExists'),
+//        'name' => 'overwriteIfExists',
+//        'values' => array(
+//        ),
+//        'after_element_html' => $this->getNote('desc_overwriteIfExists'),
+//      ));
+
       $options = $this->picklistToOptions($this->connectionTestResult['contacttypes']);
       $fieldset->addField('defaultCustomerType', 'select', array(
         'label' => $this->t('field_defaultCustomerType'),
         'name' => 'defaultCustomerType',
         'values' => $options,
         'required' => FALSE,
-      ));
-
-      $fieldset->addField('genericCustomer', 'checkboxes', array(
-        'label' => $this->t('field_genericCustomer'),
-        'name' => 'genericCustomer',
-        'values' => array(
-          array(
-            'value' => 1,
-            'label' => $this->t('option_genericCustomer'),
-          ),
-        ),
-        'after_element_html' => $this->getNote('desc_genericCustomer'),
-      ));
-
-      $fieldset->addField('genericCustomerEmail', 'text', array(
-          'name' => 'genericCustomerEmail',
-          'label' => $this->t('field_genericCustomerEmail'),
-          'title' => $this->t('field_genericCustomerEmail'),
-          'after_element_html' => $this->getNote('desc_genericCustomerEmail'),
-          'required' => FALSE,
-        )
-      );
-
-      $fieldset->addField('overwriteIfExists', 'checkboxes', array(
-        'label' => $this->t('field_overwriteIfExists'),
-        'name' => 'overwriteIfExists',
-        'values' => array(
-          array(
-            'value' => 1,
-            'label' => $this->t('option_overwriteIfExists'),
-          ),
-        ),
-        'after_element_html' => $this->getNote('desc_overwriteIfExists'),
       ));
 
       $options = $this->webAPI->getPicklistAccounts();
@@ -231,7 +231,17 @@ class Siel_Acumulus_Block_Adminhtml_Settings_Form extends Mage_Adminhtml_Block_W
 
     $post = $this->getRequest()->getPost();
     unset($post['form_key']);
-    $form->setValues($post + $this->acumulusConfig->getCredentials() + $this->acumulusConfig->getInvoiceSettings());
+
+    $values = $post + $this->acumulusConfig->getCredentials() + $this->acumulusConfig->getInvoiceSettings();
+    $values['clientData'] = array();
+    if (!empty($values['sendCustomer'])) {
+      $values['clientData'][] = 'sendCustomer';
+    }
+    if (!empty($values['overwriteIfExists'])) {
+      $values['clientData'][] = 'overwriteIfExists';
+    }
+    $form->setValues($values);
+
 
     $form->setAction($this->getUrl('*/*/settings'));
     $form->setMethod('post');

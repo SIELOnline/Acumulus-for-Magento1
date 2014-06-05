@@ -35,10 +35,10 @@ class Siel_Acumulus_Adminhtml_AcumulusController extends Mage_Adminhtml_Controll
               $values[$key] = $this->acumulusConfig->get('password');
             }
           }
-          else if (($key === 'genericCustomer' || $key === 'overwriteIfExists') && isset($post['defaultCustomerType'])) {
+          else if (($key === 'sendCustomer' || $key === 'overwriteIfExists') && isset($post['defaultCustomerType'])) {
             // Not checked checkboxes are not set at all in the post values.
             // Set the unchecked value if it was available on the form
-            $values[$key] = 0;
+            $values[$key] = in_array($key, $post['clientData']);
           }
         }
         $this->processForm($values);
