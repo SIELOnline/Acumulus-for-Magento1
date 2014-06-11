@@ -163,6 +163,23 @@ class Siel_Acumulus_Model_InvoiceAddBase {
   }
 
   /**
+   * Gets the maximum vat rate that can be found in the given item lines.
+   *
+   * @param array $itemLines
+   *
+   * @return int
+   */
+  protected function getMaxVatRate(array $itemLines) {
+    $maxVatRate = 0;
+    foreach ($itemLines as $orderLine) {
+      if (isset($orderLine['vatrate']) && $orderLine['vatrate'] > $maxVatRate) {
+        $maxVatRate = $orderLine['vatrate'];
+      }
+    }
+    return $maxVatRate;
+  }
+
+  /**
    * @return bool
    *   Whether the prices for the products are entered with or without tax.
    */

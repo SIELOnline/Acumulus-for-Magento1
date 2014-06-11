@@ -83,12 +83,12 @@ class Siel_Acumulus_Model_CreditInvoiceAdd extends Siel_Acumulus_Model_InvoiceAd
    * @return array
    */
   protected function addCreditMemoLines(Mage_Sales_Model_Order_Creditmemo $creditMemo) {
-    $result = array_merge(
-      $this->addItemLines($creditMemo),
-      $this->addShippingLines($creditMemo),
-      $this->addDiscountLines($creditMemo)
-    );
+    $itemLines = $this->addItemLines($creditMemo);
+    $maxVatRate = $this->getMaxVatRate($itemLines);
+    $shippingLines = $this->addShippingLines($creditMemo, $maxVatRate);
+    $discountLines = $this->addDiscountLines($$creditMemo);
 
+    $result = array_merge($itemLines, $shippingLines, $discountLines);
     return $result;
   }
 
@@ -148,21 +148,24 @@ class Siel_Acumulus_Model_CreditInvoiceAdd extends Siel_Acumulus_Model_InvoiceAd
    * All shipping costs are collected in 1 line as we only have shipping totals.
    *
    * @param Mage_Sales_Model_Order_Creditmemo $creditMemo
+   * @param int $maxVatRate
    *
    * @return array
    *   0 or 1 shipping lines.
    */
-  protected function addShippingLines(Mage_Sales_Model_Order_Creditmemo $creditMemo) {
+  protected function addShippingLines(Mage_Sales_Model_Order_Creditmemo $creditMemo, $maxVatRate) {
     $result = array();
     if ($creditMemo->getShippingAmount() > 0) {
-      $result[] = $this->addShippingLine($creditMemo);
+      $result[] = $this->addShippingLine($creditMemo, $maxVatRate);
     }
     return $result;
   }
 
-  protected function addShippingLine(Mage_Sales_Model_Order_Creditmemo $creditMemo) {
+  protected function addShippingLine(Mage_Sales_Model_Order_Creditmemo $creditMemo, $maxVatRate) {
+    // If we have free shipping we still want to give the line the "correct"
+    // vat rate (for tax reports in Acumulus).
+    $vatRate = $creditMemo->getShippingTaxAmount() > 0 ? round(100.0 * $creditMemo->getShippingTaxAmount() / $creditMemo->getShippingAmount()) : $maxVatRate;
     // For higher precision, we use the prices as entered by the admin.
-    $vatRate = round(100.0 * $creditMemo->getShippingTaxAmount() / $creditMemo->getShippingAmount());
     $unitPrice = $this->productPricesIncludeTax() ? $creditMemo->getShippingInclTax() / (100 + $vatRate) * 100 : $creditMemo->getShippingAmount();
     return array(
       'itemnumber' => '',

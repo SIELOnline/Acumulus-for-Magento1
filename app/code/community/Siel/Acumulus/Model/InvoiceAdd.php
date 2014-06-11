@@ -90,12 +90,12 @@ class Siel_Acumulus_Model_InvoiceAdd extends Siel_Acumulus_Model_InvoiceAddBase 
    * @return array
    */
   protected function addInvoiceLines(Mage_Sales_Model_Order $order) {
-    $result = array_merge(
-      $this->addOrderLines($order),
-      $this->addShippingLines($order),
-      $this->addDiscountLines($order)
-    );
+    $itemLines = $this->addItemLines($order);
+    $maxVatRate = $this->getMaxVatRate($itemLines);
+    $shippingLines = $this->addShippingLines($order, $maxVatRate);
+    $discountLines = $this->addDiscountLines($order);
 
+    $result = array_merge($itemLines, $shippingLines, $discountLines);
     return $result;
   }
 
@@ -125,11 +125,11 @@ class Siel_Acumulus_Model_InvoiceAdd extends Siel_Acumulus_Model_InvoiceAddBase 
    *
    * @return array
    */
-  protected function addOrderLines(Mage_Sales_Model_Order $order) {
+  protected function addItemLines(Mage_Sales_Model_Order $order) {
     $result = array();
     $lines = $order->getAllVisibleItems();
     foreach ($lines as $line) {
-      $result = array_merge($result, $this->addLineItem($line));
+      $result = array_merge($result, $this->addItemLine($line));
     }
     return $result;
   }
@@ -147,7 +147,7 @@ class Siel_Acumulus_Model_InvoiceAdd extends Siel_Acumulus_Model_InvoiceAddBase 
    *
    * @return array
    */
-  protected function addLineItem(Mage_Sales_Model_Order_Item $line) {
+  protected function addItemLine(Mage_Sales_Model_Order_Item $line) {
     $result = array();
     $childLines = array();
 
@@ -182,7 +182,7 @@ class Siel_Acumulus_Model_InvoiceAdd extends Siel_Acumulus_Model_InvoiceAddBase 
       // Composed product: also add child lines, a.o. to be able to print a
       // packing slip in Acumulus.
       foreach($line->getChildrenItems() as $child) {
-        $childLines[] = reset($this->addLineItem($child));
+        $childLines[] = reset($this->addItemLine($child));
       }
 
       if ($line->getPriceInclTax() > 0.0 && ($line->getTaxPercent() > 0 || $line->getTaxAmount() == 0.0)) {
@@ -236,25 +236,29 @@ class Siel_Acumulus_Model_InvoiceAdd extends Siel_Acumulus_Model_InvoiceAddBase 
    * All shipping costs are collected in 1 line as we only have shipping totals.
    *
    * @param Mage_Sales_Model_Order $order
+   * @param int $maxVatRate
    *
    * @return array
    *   0 or 1 shipping lines.
    */
-  protected function addShippingLines(Mage_Sales_Model_Order $order) {
+  protected function addShippingLines(Mage_Sales_Model_Order $order, $maxVatRate) {
     $result = array();
     if ($order->getShippingAmount()) {
-      $result[] = $this->addShippingLine($order);
+      $result[] = $this->addShippingLine($order, $maxVatRate);
     }
     return $result;
   }
 
-  protected function addShippingLine(Mage_Sales_Model_Order $order) {
+  protected function addShippingLine(Mage_Sales_Model_Order $order, $maxVatRate) {
+    // If we have free shipping we still want to give the line the "correct"
+    // vat rate (for tax reports in Acumulus).
+    $vatRate = $order->getShippingTaxAmount() > 0 ? round(100.0 * $order->getShippingTaxAmount() / $order->getShippingAmount()) : $maxVatRate;
     // For higher precision, we use the prices as entered by the admin.
-    $vatRate = round(100.0 * $order->getShippingTaxAmount() / $order->getShippingAmount());
     $unitPrice = $this->productPricesIncludeTax() ? $order->getShippingInclTax() / (100 + $vatRate) * 100 : $order->getShippingAmount();
+    $shippingDescription = $order->getShippingDescription();
     return array(
       'itemnumber' => '',
-      'product' => $this->acumulusConfig->t('shipping_costs'),
+      'product' => !empty($shippingDescription) ? $shippingDescription : $this->acumulusConfig->t('shipping_costs'),
       'unitprice' => number_format($unitPrice, 4, '.', ''),
       'vatrate' => number_format($vatRate, 0),
       'quantity' => 1,
