@@ -243,16 +243,14 @@ class Siel_Acumulus_Model_InvoiceAdd extends Siel_Acumulus_Model_InvoiceAddBase 
    */
   protected function addShippingLines(Mage_Sales_Model_Order $order, $maxVatRate) {
     $result = array();
-    if ($order->getShippingAmount()) {
-      $result[] = $this->addShippingLine($order, $maxVatRate);
-    }
+    $result[] = $this->addShippingLine($order, $maxVatRate);
     return $result;
   }
 
   protected function addShippingLine(Mage_Sales_Model_Order $order, $maxVatRate) {
     // If we have free shipping we still want to give the line the "correct"
     // vat rate (for tax reports in Acumulus).
-    $vatRate = $order->getShippingTaxAmount() > 0 ? round(100.0 * $order->getShippingTaxAmount() / $order->getShippingAmount()) : $maxVatRate;
+    $vatRate = $order->getShippingAmount() > 0 ? round(100.0 * $order->getShippingTaxAmount() / $order->getShippingAmount()) : $maxVatRate;
     // For higher precision, we use the prices as entered by the admin.
     $unitPrice = $this->productPricesIncludeTax() ? $order->getShippingInclTax() / (100 + $vatRate) * 100 : $order->getShippingAmount();
     $shippingDescription = $order->getShippingDescription();

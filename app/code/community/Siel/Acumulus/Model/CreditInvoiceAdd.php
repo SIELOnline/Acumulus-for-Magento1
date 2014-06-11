@@ -102,7 +102,6 @@ class Siel_Acumulus_Model_CreditInvoiceAdd extends Siel_Acumulus_Model_InvoiceAd
    */
   protected function addItemLines(Mage_Sales_Model_Order_Creditmemo $creditMemo) {
     $result = array();
-    $lines = $creditMemo->getAllItems();
     foreach($creditMemo->getAllItems() as $item) {
       // Only items for which row total is set, are refunded
       /** @var Mage_Sales_Model_Order_Creditmemo_Item $item */
@@ -155,16 +154,14 @@ class Siel_Acumulus_Model_CreditInvoiceAdd extends Siel_Acumulus_Model_InvoiceAd
    */
   protected function addShippingLines(Mage_Sales_Model_Order_Creditmemo $creditMemo, $maxVatRate) {
     $result = array();
-    if ($creditMemo->getShippingAmount() > 0) {
-      $result[] = $this->addShippingLine($creditMemo, $maxVatRate);
-    }
+    $result[] = $this->addShippingLine($creditMemo, $maxVatRate);
     return $result;
   }
 
   protected function addShippingLine(Mage_Sales_Model_Order_Creditmemo $creditMemo, $maxVatRate) {
     // If we have free shipping we still want to give the line the "correct"
     // vat rate (for tax reports in Acumulus).
-    $vatRate = $creditMemo->getShippingTaxAmount() > 0 ? round(100.0 * $creditMemo->getShippingTaxAmount() / $creditMemo->getShippingAmount()) : $maxVatRate;
+    $vatRate = $creditMemo->getShippingAmount() > 0 ? round(100.0 * $creditMemo->getShippingTaxAmount() / $creditMemo->getShippingAmount()) : $maxVatRate;
     // For higher precision, we use the prices as entered by the admin.
     $unitPrice = $this->productPricesIncludeTax() ? $creditMemo->getShippingInclTax() / (100 + $vatRate) * 100 : $creditMemo->getShippingAmount();
     return array(
