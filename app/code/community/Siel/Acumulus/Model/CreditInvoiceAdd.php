@@ -86,7 +86,7 @@ class Siel_Acumulus_Model_CreditInvoiceAdd extends Siel_Acumulus_Model_InvoiceAd
     $itemLines = $this->addItemLines($creditMemo);
     $maxVatRate = $this->getMaxVatRate($itemLines);
     $shippingLines = $this->addShippingLines($creditMemo, $maxVatRate);
-    $discountLines = $this->addDiscountLines($$creditMemo);
+    $discountLines = $this->addDiscountLines($creditMemo);
 
     $result = array_merge($itemLines, $shippingLines, $discountLines);
     return $result;
@@ -201,8 +201,8 @@ class Siel_Acumulus_Model_CreditInvoiceAdd extends Siel_Acumulus_Model_InvoiceAd
     $amount = $creditMemo->getDiscountAmount(); // negative.
     $tax = $creditMemo->getHiddenTaxAmount(); // positive.
     $product = '';
-    if ($creditMemo->getDiscountDescription()) {
-      $product =  $creditMemo->getDiscountDescription();
+    if ($creditMemo->getOrder()->getDiscountDescription()) {
+      $product =  $creditMemo->getOrder()->getDiscountDescription();
     }
     else if ($creditMemo->getOrder()->getCouponCode()) {
       $product =  $creditMemo->getOrder()->getCouponCode();

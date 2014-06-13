@@ -8,11 +8,6 @@
           <action>adminhtml/acumulus/settings</action>
           <sort_order>15</sort_order>
         </acumulus_settings_form>
-        <!--<acumulus_test translate="title" module="acumulus">-->
-          <!--<title>Acumulus test</title>-->
-          <!--<action>adminhtml/acumulus/test</action>-->
-          <!--<sort_order>116</sort_order>-->
-        <!--</acumulus_test>-->
       </children>
     </system>
   </menu>
@@ -26,9 +21,6 @@
               <acumulus_settings_form>
                 <title>Acumulus settings form</title>
               </acumulus_settings_form>
-              <!--<acumulus_test>-->
-                <!--<title>Acumulus test</title>-->
-              <!--</acumulus_test>-->
             </children>
           </system>
         </children>

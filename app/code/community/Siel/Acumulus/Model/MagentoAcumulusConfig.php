@@ -26,8 +26,7 @@ class MagentoAcumulusConfig extends BaseConfig {
       'moduleVersion' => $version = Mage::getConfig()->getModuleConfig("Siel_Acumulus")->version,
       'shopName' => 'Magento',
       'shopVersion' => Mage::getVersion(),
-      // @todo: comment out in official release.
-      'debug' => true, // Uncomment to debug.
+      //'debug' => true, // Uncomment to debug.
     ));
   }
 
