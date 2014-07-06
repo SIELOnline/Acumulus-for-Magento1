@@ -1,0 +1,130 @@
+Changelog Acumulus webkoppelingen
+=================================
+
+Library die door iedere webwinkelkoppeling gebruikt wordt
+=========================================================
+
+Library 3.3.4
+-------------
+* Optie toegevoegd om klantgeevens NIET naar Acumulus te sturen.
+
+Library 3.3.3
+-------------
+* https in connector data
+* 2 gebruikerinterface-teksten.
+
+Library 3.3.2
+-------------
+* Country code voor landen buiten de EU moet leeg zijn, landnaam dient dan in city meegestuurd worden.
+* Veranderingen in connector gegevens die meegestuurd worden.
+
+Library 3.3.1
+-------------
+Vanaf deze versie wordt de changelog bijgehouden.
+
+
+
+
+Magento
+=======
+Geteste Magento versie(s):
+* 1.9.0.1
+* 1.8.1.0
+
+Magento-1.9-Acumulus-3.1.0
+-----------------------------------
+* Licentie teksten en deze changelog staan nu bij de code, geen zip in zip meer.
+* Verstuur factuur automatisch als deze aangemaakt wordt, niet meer bij het bereiken
+  van een bepaalde order status.
+* Library 3.3.4 (zie bij Library).
+
+Magento-1.9-Acumulus-3.0.0
+-----------------------------------
+Initiële versie van deze volledig herbouwde koppeling.
+* Library 3.3.4 (zie bij Library).
+
+
+
+
+OpenCart
+========
+Geteste OpenCart versie(s):
+* 1.5.6.1
+* 1.5.6
+* 1.5.5.1
+
+Werkt niet met (volgens meldingen van gebruikers):
+* 1.5.4
+* 1.5.2
+
+OpenCart-1.5.5-1.5.6-Acumulus-3.4.0
+-----------------------------------
+* Vqmod xml uitgebreid met "hooks" voor de catalog kant (op het checkout/order model).
+* Voorkom "Undefined index ..." warnings.
+* Library 3.3.2 (zie bij Library).
+
+OpenCart-1.5.5-1.5.6-Acumulus-3.3.5
+-----------------------------------
+* Oude verwijzing naar FormRenderer (nog niet naar namespace Common).
+* Template verwijst nog naar costheading ipv costcenter.
+* zip bestand bevatte ook ontwikkelbestanden (.idea, .git .gitignore).
+
+OpenCart-1.5.5-1.5.6-Acumulus-3.3.4
+-----------------------------------
+* Geconfigureerde kostenplaats werd niet doorgegeven aan Acumulus.
+
+OpenCart-1.5.5-1.5.6-Acumulus-3.3.3
+-----------------------------------
+Vanaf deze versie wordt de changelog bijgehouden.
+
+
+
+
+PrestaShop
+==========
+Geteste PrestaShop versie(s):
+* 1.5.6.0
+* 1.5.5.0
+
+PrestaShop-1.5.x-Acumulus-3.3.2
+-------------------------------
+* Library 3.3.2 (zie bij Library).
+
+PrestaShop-1.5.x-Acumulus-3.3.1
+-------------------------------
+* Geconfigureerde kostenplaats werd niet doorgegeven aan Acumulus.
+
+PrestaShop-1.5.x-Acumulus-3.3.0
+-------------------------------
+Vanaf deze versie wordt de changelog bijgehouden.
+
+
+
+
+WooCommerce
+===========
+Geteste WooCommerce versie(s):
+* 2.1.11 (WordPress: 3.9.1)
+* 2.1.3  (WordPress: 3.8.1)
+* 2.1.1  (WordPress: 3.8.1)
+
+woocommerce2.1.x-acumulus-3.2.0
+-------------------------------
+* Module werkte niet goed met kortingsbonnen die de optie "toepassen voor btw"
+  niet aangevinkt hebben.
+* Kortingsbonnen die de optie "toepassen voor btw" niet aangevinkt hebben worden
+  nu overgezet als "cadeaubon".
+* Library 3.3.4 (zie bij Library).
+
+woocommerce2.1.x-acumulus-3.1.2
+-------------------------------
+* Module werkte niet goed aan de klantkant, o.a. in combinatie met idealcheckout.
+* Library 3.3.2 en 3.3.3 (zie bij Library).
+
+woocommerce2.1.x-acumulus-3.1.1
+-------------------------------
+* Geconfigureerde kostenplaats werd niet doorgegeven aan Acumulus.
+
+woocommerce2.1.x-acumulus-3.1.0
+-------------------------------
+Vanaf deze versie wordt de changelog bijgehouden.
