@@ -88,7 +88,7 @@ class Siel_Acumulus_Model_InvoiceAddBase {
    *
    * @return array
    */
-  protected function addCustomer(Mage_Sales_Model_Order $order) {
+  protected function addCustomer(Mage_Sales_Model_Abstract $order) {
     $result = array();
 
     $invoiceAddress = $order->getBillingAddress();

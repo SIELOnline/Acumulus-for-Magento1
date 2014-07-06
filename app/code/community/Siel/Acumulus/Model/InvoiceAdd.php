@@ -19,7 +19,7 @@ class Siel_Acumulus_Model_InvoiceAdd extends Siel_Acumulus_Model_InvoiceAddBase 
    *
    * @return array
    */
-  protected function addInvoice(Mage_Sales_Model_Order $order, array $customer) {
+  protected function addInvoice(Mage_Sales_Model_Abstract $order, array $customer) {
     $result = array();
 
     /** @var \Mage_Sales_Model_Order_Invoice $invoice */
@@ -182,7 +182,8 @@ class Siel_Acumulus_Model_InvoiceAdd extends Siel_Acumulus_Model_InvoiceAddBase 
       // Composed product: also add child lines, a.o. to be able to print a
       // packing slip in Acumulus.
       foreach($line->getChildrenItems() as $child) {
-        $childLines[] = reset($this->addItemLine($child));
+        $childLine = $this->addItemLine($child);
+        $childLines[] = reset($childLine);
       }
 
       if ($line->getPriceInclTax() > 0.0 && ($line->getTaxPercent() > 0 || $line->getTaxAmount() == 0.0)) {

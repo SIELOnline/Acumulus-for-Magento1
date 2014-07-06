@@ -12,7 +12,12 @@ use Siel\Acumulus\Common\WebAPI;
  */
 class Siel_Acumulus_Model_CreditInvoiceAdd extends Siel_Acumulus_Model_InvoiceAddBase {
 
-  protected function addCustomer(Mage_Sales_Model_Order_Creditmemo $creditMemo) {
+  /**
+   * @param Mage_Sales_Model_Order_Creditmemo $creditMemo
+   *
+   * @return array
+   */
+  protected function addCustomer(Mage_Sales_Model_Abstract $creditMemo) {
     return parent::addCustomer($creditMemo->getOrder());
   }
 
@@ -24,7 +29,7 @@ class Siel_Acumulus_Model_CreditInvoiceAdd extends Siel_Acumulus_Model_InvoiceAd
    *
    * @return array
    */
-  protected function addInvoice(Mage_Sales_Model_Order_Creditmemo $creditMemo, array $customer) {
+  protected function addInvoice(Mage_Sales_Model_Abstract $creditMemo, array $customer) {
     $result = array();
 
     // Set concept to 0: Issue invoice, no concept.
