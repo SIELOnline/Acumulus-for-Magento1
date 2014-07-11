@@ -37,15 +37,15 @@
     </helpers>
 
     <events>
-      <!--<sales_order_save_after>-->
-        <!--<observers>-->
-          <!--<Siel_Acumulus_order_observer>-->
-            <!--<type>singleton</type>-->
-            <!--<class>acumulus/order_observer</class>-->
-            <!--<method>orderSaveAfter</method>-->
-          <!--</Siel_Acumulus_order_observer>-->
-        <!--</observers>-->
-      <!--</sales_order_save_after>-->
+      <sales_order_save_after>
+        <observers>
+          <Siel_Acumulus_order_observer>
+            <type>singleton</type>
+            <class>acumulus/order_observer</class>
+            <method>orderSaveAfter</method>
+          </Siel_Acumulus_order_observer>
+        </observers>
+      </sales_order_save_after>
 
       <sales_order_invoice_save_after>
         <observers>

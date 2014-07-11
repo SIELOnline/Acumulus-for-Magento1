@@ -4,9 +4,15 @@ Changelog Acumulus webkoppelingen
 Library die door iedere webwinkelkoppeling gebruikt wordt
 =========================================================
 
+Library 3.3.5
+-------------
+* Optie ingebouwd om te kiezen tussen bereiken van een bepaalde status of  het
+  moment van aanmaken van de factuur (vooralsnog alleen gebruikt door Magento).
+* Check ingebouwd op niet leeg klant-emailadres.
+
 Library 3.3.4
 -------------
-* Optie toegevoegd om klantgeevens NIET naar Acumulus te sturen.
+* Optie toegevoegd om klantgegevens NIET naar Acumulus te sturen.
 
 Library 3.3.3
 -------------
@@ -15,7 +21,8 @@ Library 3.3.3
 
 Library 3.3.2
 -------------
-* Country code voor landen buiten de EU moet leeg zijn, landnaam dient dan in city meegestuurd worden.
+* Country code voor landen buiten de EU moet leeg zijn, landnaam dient dan in
+  veld city meegestuurd te worden.
 * Veranderingen in connector gegevens die meegestuurd worden.
 
 Library 3.3.1
@@ -30,17 +37,18 @@ Magento
 Geteste Magento versie(s):
 * 1.9.0.1
 * 1.8.1.0
+* 1.7.? (getest door klanten, er worden nog wat mogelijke problemen onderzocht)
 
 Magento-1.9-Acumulus-3.1.0
 -----------------------------------
 * Licentie teksten en deze changelog staan nu bij de code, geen zip in zip meer.
-* Verstuur factuur automatisch als deze aangemaakt wordt, niet meer bij het bereiken
-  van een bepaalde order status.
-* Library 3.3.4 (zie bij Library).
+* Keuze toegevoegd om factuur automatisch te versturen als in Magento de factuur
+  aangemaakt wordt.
+* Library 3.3.5 (zie bij Library).
 
 Magento-1.9-Acumulus-3.0.0
 -----------------------------------
-Initiële versie van deze volledig herbouwde koppeling.
+* InitiÃ«le versie van deze volledig herbouwde koppeling.
 * Library 3.3.4 (zie bij Library).
 
 

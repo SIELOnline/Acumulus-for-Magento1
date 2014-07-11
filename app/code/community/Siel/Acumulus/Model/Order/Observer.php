@@ -1,5 +1,6 @@
 <?php
 
+use Siel\Acumulus\Common\ConfigInterface;
 use Siel\Acumulus\Magento\MagentoAcumulusConfig;
 
 class Siel_Acumulus_Model_Order_Observer extends Mage_Core_Model_Abstract {
@@ -11,34 +12,37 @@ class Siel_Acumulus_Model_Order_Observer extends Mage_Core_Model_Abstract {
     $this->acumulusConfig = Mage::helper('acumulus')->getAcumulusConfig();
   }
 
-//  /**
-//   * Event handler for the sales_order_save_after event.
-//   *
-//   * @param Varien_Event_Observer $observer
-//   *
-//   * @return bool
-//   */
-//  public function orderSaveAfter(Varien_Event_Observer $observer) {
-//    /** @var Varien_Event $event */
-//    $event = $observer->getEvent();
-//    /** @var Mage_Sales_Model_Order $order */
-//    $order = $event->getOrder();
-//    $currentStatus = $order->getStatus();
-//    $this->acumulusConfig = Mage::helper('acumulus')->getAcumulusConfig();
-//    if ($this->acumulusConfig->get('triggerOrderStatus') == $currentStatus) {
-//      // This should return order history ordered by created_at desc, but the
-//      // current change is at the end! So the first entry is the previous state.
-//      $history = $order->getAllStatusHistory();
-//      $previousStatus = reset($history);
-//      if ($previousStatus) {
-//        $previousStatus = $previousStatus->getStatus();
-//        if ($previousStatus != $currentStatus) {
-//          return $this->sendInvoiceToAcumulus($order);
-//        }
-//      }
-//    }
-//    return true;
-//  }
+  /**
+   * Event handler for the sales_order_save_after event.
+   *
+   * @param Varien_Event_Observer $observer
+   *
+   * @return bool
+   */
+  public function orderSaveAfter(Varien_Event_Observer $observer) {
+    $this->acumulusConfig = Mage::helper('acumulus')->getAcumulusConfig();
+    if ($this->acumulusConfig->get('triggerOrderEvent') == ConfigInterface::TriggerOrderEvent_OrderStatus) {
+      /** @var Varien_Event $event */
+      $event = $observer->getEvent();
+      /** @var Mage_Sales_Model_Order $order */
+      $order = $event->getOrder();
+      $currentStatus = $order->getStatus();
+      $this->acumulusConfig = Mage::helper('acumulus')->getAcumulusConfig();
+      if ($this->acumulusConfig->get('triggerOrderStatus') == $currentStatus) {
+        // This should return order history ordered by created_at desc, but the
+        // current change is at the end! So the first entry is the previous state.
+        $history = $order->getAllStatusHistory();
+        $previousStatus = reset($history);
+        if ($previousStatus) {
+          $previousStatus = $previousStatus->getStatus();
+          if ($previousStatus != $currentStatus) {
+            return $this->sendInvoiceToAcumulus($order);
+          }
+        }
+      }
+    }
+    return true;
+  }
 
   /**
    * Event handler for the sales_order_invoice_save_after event.
@@ -48,12 +52,16 @@ class Siel_Acumulus_Model_Order_Observer extends Mage_Core_Model_Abstract {
    * @return bool
    */
   public function invoiceSaveAfter(Varien_Event_Observer $observer) {
-    /** @var Varien_Event $event */
-    $event = $observer->getEvent();
-    /** @var Mage_Sales_Model_Order_Invoice $invoice */
-    $invoice = $event->getInvoice();
-    $order = $invoice->getOrder();
-    return $this->sendInvoiceToAcumulus($order);
+    $this->acumulusConfig = Mage::helper('acumulus')->getAcumulusConfig();
+    if ($this->acumulusConfig->get('triggerOrderEvent') == ConfigInterface::TriggerOrderEvent_InvoiceCreate) {
+      /** @var Varien_Event $event */
+      $event = $observer->getEvent();
+      /** @var Mage_Sales_Model_Order_Invoice $invoice */
+      $invoice = $event->getInvoice();
+      $order = $invoice->getOrder();
+      return $this->sendInvoiceToAcumulus($order);
+    }
+    return true;
   }
 
   /**

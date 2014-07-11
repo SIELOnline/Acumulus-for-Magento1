@@ -6,6 +6,7 @@ namespace Siel\Acumulus\Magento;
 
 use Mage;
 use Siel\Acumulus\Common\BaseConfig;
+use Siel\Acumulus\Common\ConfigInterface;
 use Siel\Acumulus\Common\TranslatorInterface;
 
 /**
@@ -27,6 +28,8 @@ class MagentoAcumulusConfig extends BaseConfig {
       'shopName' => 'Magento',
       'shopVersion' => Mage::getVersion(),
       //'debug' => true, // Uncomment to debug.
+
+      'triggerOrderEvent' => ConfigInterface::TriggerOrderEvent_InvoiceCreate,
     ));
   }
 

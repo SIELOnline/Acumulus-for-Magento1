@@ -1,5 +1,7 @@
 <?php
 
+use Siel\Acumulus\Common\ConfigInterface;
+
 class Siel_Acumulus_Block_Adminhtml_Settings_Form extends Mage_Adminhtml_Block_Widget_Form {
   /** @var bool */
   private $initialized = FALSE;
@@ -92,53 +94,51 @@ class Siel_Acumulus_Block_Adminhtml_Settings_Form extends Mage_Adminhtml_Block_W
       ));
 
       // Show invoice settings.
-      // Magento: don't allow a choice: we always use the invoice number as it
-      // will always be there.
-//      $options = array(
-//        array(
-//          'value' => ConfigInterface::InvoiceNrSource_ShopInvoice,
-//          'label' => $this->t('option_invoiceNrSource_1')
-//        ),
-//        array(
-//          'value' => ConfigInterface::InvoiceNrSource_ShopOrder,
-//          'label' => $this->t('option_invoiceNrSource_2')
-//        ),
-//        array(
-//          'value' => ConfigInterface::InvoiceNrSource_Acumulus,
-//          'label' => $this->t('option_invoiceNrSource_3'),
-//        ),
-//      );
-//      $fieldset->addField('invoiceNrSource', 'radios', array(
-//        'label' => $this->t('field_invoiceNrSource'),
-//        'name' => 'invoiceNrSource',
-//        'values' => $options,
-//        'after_element_html' => $this->getNote('desc_invoiceNrSource'),
-//        'class' => 'validate-one-required-by-name',
-//      ));
+      $options = array(
+        array(
+          'value' => ConfigInterface::InvoiceNrSource_ShopInvoice,
+          'label' => $this->t('option_invoiceNrSource_1')
+        ),
+        array(
+          'value' => ConfigInterface::InvoiceNrSource_ShopOrder,
+          'label' => $this->t('option_invoiceNrSource_2')
+        ),
+        array(
+          'value' => ConfigInterface::InvoiceNrSource_Acumulus,
+          'label' => $this->t('option_invoiceNrSource_3'),
+        ),
+      );
+      $fieldset->addField('invoiceNrSource', 'radios', array(
+        'label' => $this->t('field_invoiceNrSource'),
+        'name' => 'invoiceNrSource',
+        'values' => $options,
+        'after_element_html' => $this->getNote('desc_invoiceNrSource'),
+        'class' => 'validate-one-required-by-name',
+      ));
 
       // Magento: don't allow a choice: we always use the invoice date as it
       // will always be there.
-//      $options = array(
-//        array(
-//          'value' => ConfigInterface::InvoiceDate_InvoiceCreate,
-//          'label' => $this->t('option_dateToUse_1'),
-//        ),
-//        array(
-//          'value' => ConfigInterface::InvoiceDate_OrderCreate,
-//          'label' => $this->t('option_dateToUse_2')
-//        ),
-//        array(
-//          'value' => ConfigInterface::InvoiceDate_Transfer,
-//          'label' => $this->t('option_dateToUse_3')
-//        ),
-//      );
-//      $fieldset->addField('dateToUse', 'radios', array(
-//        'label' => $this->t('field_dateToUse'),
-//        'name' => 'dateToUse',
-//        'values' => $options,
-//        'after_element_html' => $this->getNote('desc_dateToUse'),
-//        'class' => 'validate-one-required-by-name',
-//      ));
+      $options = array(
+        array(
+          'value' => ConfigInterface::InvoiceDate_InvoiceCreate,
+          'label' => $this->t('option_dateToUse_1'),
+        ),
+        array(
+          'value' => ConfigInterface::InvoiceDate_OrderCreate,
+          'label' => $this->t('option_dateToUse_2')
+        ),
+        array(
+          'value' => ConfigInterface::InvoiceDate_Transfer,
+          'label' => $this->t('option_dateToUse_3')
+        ),
+      );
+      $fieldset->addField('dateToUse', 'radios', array(
+        'label' => $this->t('field_dateToUse'),
+        'name' => 'dateToUse',
+        'values' => $options,
+        'after_element_html' => $this->getNote('desc_dateToUse'),
+        'class' => 'validate-one-required-by-name',
+      ));
 
       $fieldset->addField('clientData', 'checkboxes', array(
         'label' => $this->t('field_clientData'),
@@ -194,18 +194,35 @@ class Siel_Acumulus_Block_Adminhtml_Settings_Form extends Mage_Adminhtml_Block_W
         'required' => FALSE,
       ));
 
-      // Magento: don't allow a choice: we always use the invoice create event,
-      // as it will always be triggered during the order handling process.
-//      $options = Mage::getModel('sales/order_status')->getResourceCollection()->getData();
-//      $options = $this->picklistToOptions($options);
-//      $options[0]['label'] = $this->t('option_empty_triggerOrderStatus');
-//      $fieldset->addField('triggerOrderStatus', 'select', array(
-//        'label' => $this->t('field_triggerOrderStatus'),
-//        'name' => 'triggerOrderStatus',
-//        'values' => $options,
-//        'after_element_html' => $this->getNote('desc_triggerOrderStatus'),
-//        'required' => FALSE,
-//      ));
+      // Show invoice send triggering event settings.
+      $options = array(
+        array(
+          'value' => ConfigInterface::TriggerOrderEvent_OrderStatus,
+          'label' => $this->t('option_triggerOrderEvent_1')
+        ),
+        array(
+          'value' => ConfigInterface::TriggerOrderEvent_InvoiceCreate,
+          'label' => $this->t('option_triggerOrderEvent_2')
+        ),
+      );
+      $fieldset->addField('triggerOrderEvent', 'radios', array(
+        'label' => $this->t('field_triggerOrderEvent'),
+        'name' => 'triggerOrderEvent',
+        'values' => $options,
+        'after_element_html' => $this->getNote('desc_triggerOrderEvent'),
+        'class' => 'validate-one-required-by-name',
+      ));
+
+      $options = Mage::getModel('sales/order_status')->getResourceCollection()->getData();
+      $options = $this->picklistToOptions($options);
+      $options[0]['label'] = $this->t('option_empty_triggerOrderStatus');
+      $fieldset->addField('triggerOrderStatus', 'select', array(
+        'label' => $this->t('field_triggerOrderStatus'),
+        'name' => 'triggerOrderStatus',
+        'values' => $options,
+        'after_element_html' => $this->getNote('desc_triggerOrderStatus'),
+        'required' => FALSE,
+      ));
     }
 
     // 3rd fieldset: version information.
