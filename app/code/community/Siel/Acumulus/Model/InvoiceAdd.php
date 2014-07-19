@@ -19,7 +19,7 @@ class Siel_Acumulus_Model_InvoiceAdd extends Siel_Acumulus_Model_InvoiceAddBase 
    *
    * @return array
    */
-  protected function addInvoice(Mage_Sales_Model_Abstract $order, array $customer) {
+  protected function addInvoice($order, array $customer) {
     $result = array();
 
     /** @var \Mage_Sales_Model_Order_Invoice $invoice */
@@ -77,29 +77,6 @@ class Siel_Acumulus_Model_InvoiceAdd extends Siel_Acumulus_Model_InvoiceAddBase 
   }
 
   /**
-   * Add the oder lines to the Acumulus invoice.
-   *
-   * This includes:
-   * - all product lines
-   * - discount lines, if any
-   * - gift wrapping line, if available
-   * - shipping costs, if any
-   *
-   * @param Mage_Sales_Model_Order $order
-   *
-   * @return array
-   */
-  protected function addInvoiceLines(Mage_Sales_Model_Order $order) {
-    $itemLines = $this->addItemLines($order);
-    $maxVatRate = $this->getMaxVatRate($itemLines);
-    $shippingLines = $this->addShippingLines($order, $maxVatRate);
-    $discountLines = $this->addDiscountLines($order);
-
-    $result = array_merge($itemLines, $shippingLines, $discountLines);
-    return $result;
-  }
-
-  /**
    * Magento has many types of products:
    * Simple product:
    * Appears once, with price and possibly with a parentId set, in both getAllItems() and getAllVisibleItems().
@@ -125,7 +102,7 @@ class Siel_Acumulus_Model_InvoiceAdd extends Siel_Acumulus_Model_InvoiceAddBase 
    *
    * @return array
    */
-  protected function addItemLines(Mage_Sales_Model_Order $order) {
+  protected function addItemLines($order) {
     $result = array();
     $lines = $order->getAllVisibleItems();
     foreach ($lines as $line) {
@@ -143,50 +120,50 @@ class Siel_Acumulus_Model_InvoiceAdd extends Siel_Acumulus_Model_InvoiceAddBase 
    * - does the bundle have price and vat info on itself?
    * - do all child lines have the same vat rate?
    *
-   * @param \Mage_Sales_Model_Order_Item $line
+   * @param \Mage_Sales_Model_Order_Item $item
    *
    * @return array
    */
-  protected function addItemLine(Mage_Sales_Model_Order_Item $line) {
+  protected function addItemLine(Mage_Sales_Model_Order_Item $item) {
     $result = array();
     $childLines = array();
 
     // Simple products (products without children): add as 1 line.
-    $result['product'] = $line->getName();
-    $this->addIfNotEmpty($result, 'itemnumber', $line->getSku());
+    $result['product'] = $item->getName();
+    $this->addIfNotEmpty($result, 'itemnumber', $item->getSku());
 
     // Magento does not support the margin scheme. So in a standard install
     // this method will always return false. But if this method happens to
     // return true anyway (customisation, hook), the costprice will trigger
     // vattype = 5 for Acumulus.
-    if ($this->useMarginScheme($line)) {
+    if ($this->useMarginScheme($item)) {
       // Margin scheme:
       // - Do not put VAT on invoice: send price incl VAT as unitprice.
       // - But still send the VAT rate to Acumulus.
-      $unitPrice = $line->getPriceInclTax();
+      $unitPrice = $item->getPriceInclTax();
       $result['unitprice'] = number_format($unitPrice, 4, '.', '');
       // Costprice > 0 is the trigger for Acumulus to use the margin scheme.
-      $result['costprice'] = number_format($line->getBaseCost(), 4, '.', '');
+      $result['costprice'] = number_format($item->getBaseCost(), 4, '.', '');
     }
     else {
       // Normal case: send price without VAT.
       // For higher precision, we use the prices as entered by the admin.
-      $unitPrice = $this->productPricesIncludeTax() ? $line->getPriceInclTax() / (100 + $line->getTaxPercent()) * 100 : $line->getPrice();
+      $unitPrice = $this->productPricesIncludeTax() ? $item->getPriceInclTax() / (100 + $item->getTaxPercent()) * 100 : $item->getPrice();
       $result['unitprice'] = number_format($unitPrice, 4, '.', '');
     }
 
-    $result['quantity'] = number_format($line->getQtyOrdered(), 2, '.', '');
-    $result['vatrate'] = number_format($line->getTaxPercent(), 0);
+    $result['quantity'] = number_format($item->getQtyOrdered(), 2, '.', '');
+    $result['vatrate'] = number_format($item->getTaxPercent(), 0);
 
-    if (count($line->getChildrenItems()) > 0) {
+    if (count($item->getChildrenItems()) > 0) {
       // Composed product: also add child lines, a.o. to be able to print a
       // packing slip in Acumulus.
-      foreach($line->getChildrenItems() as $child) {
+      foreach($item->getChildrenItems() as $child) {
         $childLine = $this->addItemLine($child);
         $childLines[] = reset($childLine);
       }
 
-      if ($line->getPriceInclTax() > 0.0 && ($line->getTaxPercent() > 0 || $line->getTaxAmount() == 0.0)) {
+      if ($item->getPriceInclTax() > 0.0 && ($item->getTaxPercent() > 0 || $item->getTaxAmount() == 0.0)) {
         // If the bundle line contains valid price and tax info, we remove that
         // info from all child lines (to prevent accounting amounts twice).
         foreach ($childLines as &$childLine) {
@@ -229,73 +206,43 @@ class Siel_Acumulus_Model_InvoiceAdd extends Siel_Acumulus_Model_InvoiceAddBase 
       }
     }
 
+    // Administer taxes on discount per tax rate.
+    if ($item->getDiscountAmount() > 0.0) {
+      $taxDifference = (0.01 * $item->getTaxPercent() * $item->getQtyOrdered() * $unitPrice) - $item->getTaxAmount();
+      if (!$this->floatsAreEqual($taxDifference, 0.0)) {
+        if (array_key_exists($result['vatrate'], $this->taxesMissing)) {
+          $this->taxesMissing[$result['vatrate']] += $taxDifference;
+        }
+        else {
+          $this->taxesMissing[$result['vatrate']] = $taxDifference;
+        }
+      }
+    }
+
     $result = array_merge(array($result), $childLines);
     return $result;
   }
 
   /**
-   * All shipping costs are collected in 1 line as we only have shipping totals.
+   * Add the line(s) for 1 discount.
    *
-   * @param Mage_Sales_Model_Order $order
-   * @param int $maxVatRate
-   *
-   * @return array
-   *   0 or 1 shipping lines.
-   */
-  protected function addShippingLines(Mage_Sales_Model_Order $order, $maxVatRate) {
-    $result = array();
-    $result[] = $this->addShippingLine($order, $maxVatRate);
-    return $result;
-  }
-
-  protected function addShippingLine(Mage_Sales_Model_Order $order, $maxVatRate) {
-    // If we have free shipping we still want to give the line the "correct"
-    // vat rate (for tax reports in Acumulus).
-    $vatRate = $order->getShippingAmount() > 0 ? round(100.0 * $order->getShippingTaxAmount() / $order->getShippingAmount()) : $maxVatRate;
-    // For higher precision, we use the prices as entered by the admin.
-    $unitPrice = $this->productPricesIncludeTax() ? $order->getShippingInclTax() / (100 + $vatRate) * 100 : $order->getShippingAmount();
-    $shippingDescription = $order->getShippingDescription();
-    return array(
-      'itemnumber' => '',
-      'product' => !empty($shippingDescription) ? $shippingDescription : $this->acumulusConfig->t('shipping_costs'),
-      'unitprice' => number_format($unitPrice, 4, '.', ''),
-      'vatrate' => number_format($vatRate, 0),
-      'quantity' => 1,
-    );
-  }
-
-  /**
-   * All discount costs are collected in 1 line as we only have discount totals.
-   *
-   * @param Mage_Sales_Model_Order $order
-   *
-   * @return array
-   *   0 or 1 discount lines.
-   */
-  protected function addDiscountLines(Mage_Sales_Model_Order $order) {
-    $result = array();
-    if ($order->getDiscountAmount() < 0) {
-      $result[] = $this->addDiscountLine($order);
-    }
-    return $result;
-  }
-
-  /**
-   * We assume the hidden_tax_amount to be the tax on the discount, but it is
-   * a positive number so take care.
+   * We assume the hidden_tax_amount to be the tax on the discount. But take
+   * note of the following:
+   * - it is a positive number (unlike the discount amount).
+   * - there are cases where this amount = 0, notably when the catalog prices
+   *   are ex VAT.
    *
    * @param Mage_Sales_Model_Order $order
    *
    * @return array
    */
   protected function addDiscountLine(Mage_Sales_Model_Order $order) {
-    $amount = $order->getDiscountAmount();
-    $tax = -$order->getHiddenTaxAmount();
+    $discountInfo = $this->getDiscountInfo($order);
     return array(
       'itemnumber' => '',
-      'product' => $order->getCouponCode() ? $this->acumulusConfig->t('discount_code') . ' ' . $order->getCouponCode() : $this->acumulusConfig->t('discount'),
-      'unitprice' => number_format($amount - $tax, 4, '.', ''),
-      'vatrate' => number_format(100.0 * $tax / ($amount - $tax), 0),
+      'product' => $this->getDiscountDescription($order),
+      'unitprice' => number_format(-$discountInfo['amount'], 4, '.', ''),
+      'vatrate' => number_format($discountInfo['vatRate'], 0),
       'quantity' => 1,
     );
   }

@@ -17,7 +17,7 @@ class Siel_Acumulus_Model_CreditInvoiceAdd extends Siel_Acumulus_Model_InvoiceAd
    *
    * @return array
    */
-  protected function addCustomer(Mage_Sales_Model_Abstract $creditMemo) {
+  protected function addCustomer($creditMemo) {
     return parent::addCustomer($creditMemo->getOrder());
   }
 
@@ -29,7 +29,7 @@ class Siel_Acumulus_Model_CreditInvoiceAdd extends Siel_Acumulus_Model_InvoiceAd
    *
    * @return array
    */
-  protected function addInvoice(Mage_Sales_Model_Abstract $creditMemo, array $customer) {
+  protected function addInvoice($creditMemo, array $customer) {
     $result = array();
 
     // Set concept to 0: Issue invoice, no concept.
@@ -52,7 +52,7 @@ class Siel_Acumulus_Model_CreditInvoiceAdd extends Siel_Acumulus_Model_InvoiceAd
       $result['issuedate'] = substr($creditMemo->getCreatedAt(), 0, strlen('yyyy-mm-dd'));
     }
 
-    // Detemine payment status based on credit memo state..
+    // Determine payment status based on credit memo state..
     if ($creditMemo->getState() == Mage_Sales_Model_Order_Creditmemo::STATE_REFUNDED) {
       $result['paymentstatus'] = WebAPI::PaymentStatus_Paid;
       // @todo: can we find the date that it got refunded.
@@ -66,34 +66,11 @@ class Siel_Acumulus_Model_CreditInvoiceAdd extends Siel_Acumulus_Model_InvoiceAd
     $result['description'] = $this->acumulusConfig->t('refund') . ' ' .$this->acumulusConfig->t('order_id') . ' ' . $creditMemo->getOrder()->getIncrementId();
 
     // Add all order lines.
-    $result['line'] = $this->addCreditMemoLines($creditMemo);
+    $result['line'] = $this->addInvoiceLines($creditMemo);
 
     // Determine vat type.
     $result['vattype'] = $this->webAPI->getVatType($customer, $result);
 
-    return $result;
-  }
-
-  /**
-   * Add the oder lines to the Acumulus invoice.
-   *
-   * This includes:
-   * - all product lines
-   * - discount lines, if any
-   * - gift wrapping line, if available
-   * - shipping costs, if any
-   *
-   * @param Mage_Sales_Model_Order_Creditmemo $creditMemo
-   *
-   * @return array
-   */
-  protected function addCreditMemoLines(Mage_Sales_Model_Order_Creditmemo $creditMemo) {
-    $itemLines = $this->addItemLines($creditMemo);
-    $maxVatRate = $this->getMaxVatRate($itemLines);
-    $shippingLines = $this->addShippingLines($creditMemo, $maxVatRate);
-    $discountLines = $this->addDiscountLines($creditMemo);
-
-    $result = array_merge($itemLines, $shippingLines, $discountLines);
     return $result;
   }
 
@@ -128,7 +105,7 @@ class Siel_Acumulus_Model_CreditInvoiceAdd extends Siel_Acumulus_Model_InvoiceAd
     $result['product'] = $item->getName();
     $this->addIfNotEmpty($result, 'itemnumber', $item->getSku());
 
-    $vatRate = round(100.0 * $item->getTaxAmount() / $item->getPrice());
+    $vatRate = round(100.0 * ($item->getTaxAmount() + $item->getHiddenTaxAmount()) / ($item->getQty() * $item->getPrice()));
     if ($this->useMarginScheme($item)) {
       // Send price with VAT.
       $result['unitprice'] = number_format(-$item->getPriceInclTax(), 4, '.', '');
@@ -145,81 +122,43 @@ class Siel_Acumulus_Model_CreditInvoiceAdd extends Siel_Acumulus_Model_InvoiceAd
     $result['quantity'] = number_format($item->getQty(), 2, '.', '');
     $result['vatrate'] = number_format($vatRate, 0);
 
-    return $result;
-  }
-
-  /**
-   * All shipping costs are collected in 1 line as we only have shipping totals.
-   *
-   * @param Mage_Sales_Model_Order_Creditmemo $creditMemo
-   * @param int $maxVatRate
-   *
-   * @return array
-   *   0 or 1 shipping lines.
-   */
-  protected function addShippingLines(Mage_Sales_Model_Order_Creditmemo $creditMemo, $maxVatRate) {
-    $result = array();
-    $result[] = $this->addShippingLine($creditMemo, $maxVatRate);
-    return $result;
-  }
-
-  protected function addShippingLine(Mage_Sales_Model_Order_Creditmemo $creditMemo, $maxVatRate) {
-    // If we have free shipping we still want to give the line the "correct"
-    // vat rate (for tax reports in Acumulus).
-    $vatRate = $creditMemo->getShippingAmount() > 0 ? round(100.0 * $creditMemo->getShippingTaxAmount() / $creditMemo->getShippingAmount()) : $maxVatRate;
-    // For higher precision, we use the prices as entered by the admin.
-    $unitPrice = $this->productPricesIncludeTax() ? $creditMemo->getShippingInclTax() / (100 + $vatRate) * 100 : $creditMemo->getShippingAmount();
-    return array(
-      'itemnumber' => '',
-      'product' => $this->acumulusConfig->t('shipping_costs'),
-      'unitprice' => number_format(-$unitPrice, 4, '.', ''),
-      'vatrate' => number_format($vatRate, 0),
-      'quantity' => 1,
-    );
-  }
-
-  /**
-   * All discount costs are collected in 1 line as we only have discount totals.
-   *
-   * @param Mage_Sales_Model_Order_Creditmemo $creditMemo
-   *
-   * @return array
-   *   0 or 1 discount lines.
-   */
-  protected function addDiscountLines(Mage_Sales_Model_Order_Creditmemo $creditMemo) {
-    $result = array();
-    if ($creditMemo->getDiscountAmount() < 0) {
-      $result[] = $this->addDiscountLine($creditMemo);
+    // Administer taxes on discount per tax rate.
+    if ($item->getDiscountAmount() > 0.0) {
+      $taxDifference = (0.01 * $item->getTaxPercent() * $item->getQtyOrdered() * $unitPrice) - $item->getTaxAmount();
+      if (!$this->floatsAreEqual($taxDifference, 0.0)) {
+        if (array_key_exists($result['vatrate'], $this->taxesMissing)) {
+          $this->taxesMissing[$result['vatrate']] += $taxDifference;
+        }
+        else {
+          $this->taxesMissing[$result['vatrate']] = $taxDifference;
+        }
+      }
     }
+
     return $result;
   }
 
   /**
-   * We assume the hidden_tax_amount to be the tax on the discount, but it is
-   * a positive number so take care.
+   * Add the line(s) for 1 discount.
+   *
+   * We assume the hidden_tax_amount to be the tax on the discount. But take
+   * note of the following:
+   * - it is a positive number (unlike the discount amount).
+   * - there are cases where this amount = 0, notably when the catalog prices
+   *   are ex VAT.
    *
    * @param Mage_Sales_Model_Order_Creditmemo $creditMemo
    *
    * @return array
    */
   protected function addDiscountLine(Mage_Sales_Model_Order_Creditmemo $creditMemo) {
-    $amount = $creditMemo->getDiscountAmount(); // negative.
-    $tax = $creditMemo->getHiddenTaxAmount(); // positive.
-    $product = '';
-    if ($creditMemo->getOrder()->getDiscountDescription()) {
-      $product =  $creditMemo->getOrder()->getDiscountDescription();
-    }
-    else if ($creditMemo->getOrder()->getCouponCode()) {
-      $product =  $creditMemo->getOrder()->getCouponCode();
-    }
-    $product = $product ? $this->acumulusConfig->t('discount_code') . ' ' . $product : $this->acumulusConfig->t('discount');
+    $discountInfo = $this->getDiscountInfo($creditMemo);
     return array(
       'itemnumber' => '',
-      'product' => $product,
-      'unitprice' => number_format($amount + $tax, 4, '.', ''),
-      'vatrate' => number_format(100.0 * $tax / (-$amount - $tax), 0),
+      'product' => $this->getDiscountDescription($creditMemo),
+      'unitprice' => number_format($discountInfo['amount'], 4, '.', ''),
+      'vatrate' => number_format($discountInfo['vatRate'], 0),
       'quantity' => 1,
     );
   }
-
 }

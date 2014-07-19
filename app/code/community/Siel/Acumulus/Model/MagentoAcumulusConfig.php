@@ -27,8 +27,6 @@ class MagentoAcumulusConfig extends BaseConfig {
       'moduleVersion' => $version = Mage::getConfig()->getModuleConfig("Siel_Acumulus")->version,
       'shopName' => 'Magento',
       'shopVersion' => Mage::getVersion(),
-      //'debug' => true, // Uncomment to debug.
-
       'triggerOrderEvent' => ConfigInterface::TriggerOrderEvent_InvoiceCreate,
     ));
   }

@@ -6,6 +6,10 @@ Library die door iedere webwinkelkoppeling gebruikt wordt
 
 Library 3.3.5
 -------------
+* Instellingen 'Debug' en 'Lokaal' zijn samengevoegd en kan via het
+  instellingenformulier door gebruikers aangepast worden.
+* Test/lokaal optie geïntegreerd in de normale code (omwille van een betere
+  ondersteuning).
 * Optie ingebouwd om te kiezen tussen bereiken van een bepaalde status of  het
   moment van aanmaken van de factuur (vooralsnog alleen gebruikt door Magento).
 * Check ingebouwd op niet leeg klant-emailadres.
@@ -44,6 +48,12 @@ Magento-1.9-Acumulus-3.1.0
 * Licentie teksten en deze changelog staan nu bij de code, geen zip in zip meer.
 * Keuze toegevoegd om factuur automatisch te versturen als in Magento de factuur
   aangemaakt wordt.
+* Facturen konden dubbel verstuurd worden als voor de "status voor verzending"
+  'processing' is geselecteerd.
+* Support en debug optie toegevoegd aan instellingenscherm.
+* Handmatig (her)verzenden toegevoegd.
+* BTW berekeningen gingen fout als catalogusprijzen ex. BTW worden opgegeven.
+* Betalingskosten werden niet meegestuurd naar Acumulus.
 * Library 3.3.5 (zie bij Library).
 
 Magento-1.9-Acumulus-3.0.0
@@ -64,6 +74,11 @@ Geteste OpenCart versie(s):
 Werkt niet met (volgens meldingen van gebruikers):
 * 1.5.4
 * 1.5.2
+
+OpenCart-1.5.5-1.5.6-Acumulus-3.x.x (nog uit te geven)
+-----------------------------------
+* Licentie teksten en deze changelog staan nu bij de code, geen zip in zip meer.
+* Library 3.3.5 (zie bij Library).
 
 OpenCart-1.5.5-1.5.6-Acumulus-3.4.0
 -----------------------------------

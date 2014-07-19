@@ -12,7 +12,7 @@ class Siel_Acumulus_Adminhtml_AcumulusController extends Mage_Adminhtml_Controll
 
 
   protected function _isAllowed() {
-    return Mage::getSingleton('admin/session')->isAllowed('system/acumulus_configform');
+    return Mage::getSingleton('admin/session')->isAllowed('acumulus/acumulus_'. $this->getRequest()->getRequestedActionName() . '_form');
   }
 
   public function settingsAction() {
@@ -41,7 +41,7 @@ class Siel_Acumulus_Adminhtml_AcumulusController extends Mage_Adminhtml_Controll
             $values[$key] = in_array($key, $post['clientData']);
           }
         }
-        $this->processForm($values);
+        $this->processSettingsForm($values);
         if ($values['password']) {
           $message = Mage::helper('acumulus')->checkAccountSettings();
           if (is_string($message)) {
@@ -54,7 +54,7 @@ class Siel_Acumulus_Adminhtml_AcumulusController extends Mage_Adminhtml_Controll
     }
 
     $this->loadLayout();
-    $this->_setActiveMenu('system/acumulus_settings_form');
+    $this->_setActiveMenu('acumulus/acumulus_settings_form');
     $this->_addContent($this->getLayout()->createBlock('siel_acumulus_block_adminhtml_settings'));
     $this->renderLayout();
   }
@@ -66,7 +66,7 @@ class Siel_Acumulus_Adminhtml_AcumulusController extends Mage_Adminhtml_Controll
    *
    * @return bool
    */
-  private function processForm(array $values) {
+  private function processSettingsForm(array $values) {
     if ($result = $this->validateForm($values, $output)) {
       $this->acumulusConfig->castValues($values);
       $this->acumulusConfig->save($values);
@@ -95,16 +95,73 @@ class Siel_Acumulus_Adminhtml_AcumulusController extends Mage_Adminhtml_Controll
     return Mage::helper('acumulus')->t($key);
   }
 
-//  public function testAction() {
-//    $this->_title($this->__('System'))->_title('Test Page');
-//
-//    /** @var Mage_Sales_Model_Order_Creditmemo $model */
-//    $model = Mage::getModel('sales/order_creditmemo');
-//
-//    /** @var Siel_Acumulus_Model_Order_Observer $observer */
-//    $observer = Mage::getModel('acumulus/order_observer');
-//    $observer->sendCreditMemoToAcumulus($model->load(8));
-//  }
+  public function manualAction() {
+    $this->_title($this->__('System'))->_title($this->t('page_title_manual'));
+
+    if ($this->getRequest()->getMethod() === 'POST') {
+      $post = $this->getRequest()->getPost();
+      try {
+        if (empty($post)) {
+          Mage::throwException($this->__('Invalid form data.'));
+        }
+
+        /* Process the submitted form */
+        if (!empty($post['manual_order'])) {
+          /** @var Mage_Sales_Model_Order $order */
+          $order = Mage::getModel('sales/order');
+          $incrementId = (int) $post['manual_order'];
+          $order->loadByIncrementId($incrementId);
+          if ($order->getId()) {
+            /** @var Siel_Acumulus_Model_Order_Observer $observer */
+            $observer = Mage::getModel('acumulus/order_observer');
+            $observer->sendInvoiceToAcumulus($order);
+            Mage::getSingleton('adminhtml/session')->addSuccess(sprintf($this->t('manual_order_sent'), $incrementId));
+          }
+          else {
+            Mage::getSingleton('adminhtml/session')->addError(sprintf($this->t('manual_order_not_found'), $incrementId));
+          }
+        }
+        else if (!empty($post['manual_invoice'])) {
+          /** @var Mage_Sales_Model_Order_Invoice $invoice */
+          $invoice = Mage::getModel('sales/order_invoice');
+          $incrementId = (int) $post['manual_invoice'];
+          $invoice->loadByIncrementId($incrementId);
+          if ($invoice->getId()) {
+            $order = $invoice->getOrder();
+            /** @var Siel_Acumulus_Model_Order_Observer $observer */
+            $observer = Mage::getModel('acumulus/order_observer');
+            $observer->sendInvoiceToAcumulus($order);
+            Mage::getSingleton('adminhtml/session')->addSuccess(sprintf($this->t('manual_invoice_sent'), $incrementId));
+          }
+          else {
+            Mage::getSingleton('adminhtml/session')->addError(sprintf($this->t('manual_invoice_not_found'), $incrementId));
+          }
+        }
+        else if (!empty($post['manual_creditmemo'])) {
+          /** @var Mage_Sales_Model_Order_Creditmemo $creditmemo */
+          $creditmemo = Mage::getModel('sales/order_creditmemo');
+          $incrementId = (int) $post['manual_creditmemo'];
+          $creditmemo->load($incrementId, 'increment_id');
+          if ($creditmemo->getId()) {
+            /** @var Siel_Acumulus_Model_Order_Observer $observer */
+            $observer = Mage::getModel('acumulus/order_observer');
+            $observer->sendCreditMemoToAcumulus($creditmemo);
+            Mage::getSingleton('adminhtml/session')->addSuccess(sprintf($this->t('manual_creditmemo_sent'), $incrementId));
+          }
+          else {
+            Mage::getSingleton('adminhtml/session')->addError(sprintf($this->t('manual_creditmemo_not_found'), $incrementId));
+          }
+        }
+      } catch (Exception $e) {
+        Mage::getSingleton('adminhtml/session')->addError($e->getMessage());
+      }
+    }
+
+    $this->loadLayout();
+    $this->_setActiveMenu('acumulus/acumulus_manual_form');
+    $this->_addContent($this->getLayout()->createBlock('siel_acumulus_block_adminhtml_manual'));
+    $this->renderLayout();
+  }
 
 }
 

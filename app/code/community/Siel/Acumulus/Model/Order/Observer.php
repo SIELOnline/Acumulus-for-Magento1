@@ -29,15 +29,21 @@ class Siel_Acumulus_Model_Order_Observer extends Mage_Core_Model_Abstract {
       $currentStatus = $order->getStatus();
       $this->acumulusConfig = Mage::helper('acumulus')->getAcumulusConfig();
       if ($this->acumulusConfig->get('triggerOrderStatus') == $currentStatus) {
-        // This should return order history ordered by created_at desc, but the
-        // current change is at the end! So the first entry is the previous state.
+        // getAllStatusHistory returns order history ordered by created_at desc,
+        // but the current change is at the end!
         $history = $order->getAllStatusHistory();
-        $previousStatus = reset($history);
-        if ($previousStatus) {
-          $previousStatus = $previousStatus->getStatus();
-          if ($previousStatus != $currentStatus) {
-            return $this->sendInvoiceToAcumulus($order);
+        // Remove the current state.
+        array_pop($history);
+        // Look if we have had this status before.
+        $isFirstTime = true;
+        foreach ($history as $previousState) {
+          if ($previousState->getStatus() == $currentStatus) {
+            $isFirstTime = false;
+            break;
           }
+        }
+        if ($isFirstTime) {
+          return $this->sendInvoiceToAcumulus($order);
         }
       }
     }

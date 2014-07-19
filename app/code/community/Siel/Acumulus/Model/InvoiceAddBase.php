@@ -10,13 +10,16 @@ use Siel\Acumulus\Magento\MagentoAcumulusConfig;
  * Class InvoiceAddBase defines basic logic to add an order or credit memo to
  * Acumulus via their web API.
  */
-class Siel_Acumulus_Model_InvoiceAddBase {
+abstract class Siel_Acumulus_Model_InvoiceAddBase {
 
   /** @var MagentoAcumulusConfig */
   protected $acumulusConfig;
 
   /** @var WebAPI */
   protected $webAPI;
+
+  /** @var array */
+  protected $taxesMissing;
 
   public function __construct() {
     $this->acumulusConfig = Mage::helper('acumulus')->getAcumulusConfig();
@@ -43,7 +46,7 @@ class Siel_Acumulus_Model_InvoiceAddBase {
    * See https://apidoc.sielsystems.nl/content/warning-error-and-status-response-section-most-api-calls
    * for more information on the contents of the returned array.
    */
-  public function send(Mage_Sales_Model_Abstract $order) {
+  public function send($order) {
     // Create the invoice array.
     $invoice = $this->convertOrderToAcumulusInvoice($order);
 
@@ -62,7 +65,8 @@ class Siel_Acumulus_Model_InvoiceAddBase {
    *
    * @return array
    */
-  protected function convertOrderToAcumulusInvoice(Mage_Sales_Model_Abstract $order) {
+  protected function convertOrderToAcumulusInvoice($order) {
+    $this->taxesMissing = array();
     $invoice = array();
     $invoice['customer'] = $this->addCustomer($order);
     $invoice['customer']['invoice'] = $this->addInvoice($order, $invoice['customer']);
@@ -88,7 +92,7 @@ class Siel_Acumulus_Model_InvoiceAddBase {
    *
    * @return array
    */
-  protected function addCustomer(Mage_Sales_Model_Abstract $order) {
+  protected function addCustomer($order) {
     $result = array();
 
     $invoiceAddress = $order->getBillingAddress();
@@ -113,14 +117,193 @@ class Siel_Acumulus_Model_InvoiceAddBase {
   }
 
   /**
-   * Add the invoice part to the Acumulus invoice.
+   * Add the oder lines to the Acumulus invoice.
    *
-   * @param Mage_Sales_Model_Abstract $model
-   * @param array $customer
+   * This includes:
+   * - all product lines
+   * - shipping costs, if any
+   * - payment processing fees, if any
+   * - discount lines, if any
+   *
+   * @param Mage_Sales_Model_Order|Mage_Sales_Model_Order_Creditmemo $order
+   *   Order or credit memo.
    *
    * @return array
    */
-  protected function addInvoice(Mage_Sales_Model_Abstract $model, array $customer) { }
+  protected function addInvoiceLines($order) {
+    $itemLines = $this->addItemLines($order);
+    $maxVatRate = $this->getMaxVatRate($itemLines);
+    $feeLines = $this->addFeeLines($order, $maxVatRate);
+    $discountLines = $this->addDiscountLines($order);
+
+    $result = array_merge($itemLines, $feeLines, $discountLines);
+    return $result;
+  }
+
+  /**
+   * Returns a collection of fee lines.
+   *
+   * Known fees:
+   * - shipping costs
+   * - payment charges
+   *
+   * @param Mage_Sales_Model_Order|Mage_Sales_Model_Order_Creditmemo $order
+   * @param int $maxVatRate
+   *
+   * @return array
+   *   array of fee lines.
+   */
+  protected function addFeeLines($order, $maxVatRate) {
+    $result = array();
+    if ($order->getShippingAmount() !== null) {
+      $result[] = $this->addShippingLine($order, $maxVatRate);
+    }
+    if ($order->getPaymentchargeAmount() !== null) {
+      $result[] = $this->addPaymentChargeLine($order, $maxVatRate);
+    }
+    return $result;
+  }
+
+  /**
+   * Returns a line with the shipping costs.
+   *
+   * @param Mage_Sales_Model_Order|Mage_Sales_Model_Order_Creditmemo $order
+   * @param int $maxVatRate
+   *
+   * @return array
+   */
+  protected function addShippingLine($order, $maxVatRate) {
+    // If we have free shipping we still want to give the line the "correct"
+    // vat rate (for tax reports in Acumulus).
+    $vatRate = $order->getShippingAmount() > 0 ? round(100.0 * $order->getShippingTaxAmount() / $order->getShippingAmount()) : $maxVatRate;
+    // For higher precision, we use the prices as entered by the admin.
+    $unitPrice = $this->productPricesIncludeTax() ? $order->getShippingInclTax() / (100 + $vatRate) * 100 : $order->getShippingAmount();
+    $shippingDescription = $order->getShippingDescription();
+    $result = array(
+      'itemnumber' => '',
+      'product' => !empty($shippingDescription) ? $shippingDescription : $this->acumulusConfig->t('shipping_costs'),
+      'unitprice' => number_format($unitPrice, 4, '.', ''),
+      'vatrate' => number_format($vatRate, 0),
+      'quantity' => 1,
+    );
+
+    // Administer taxes on discount per tax rate.
+    if ($order->getShippingDiscountAmount() > 0.0) {
+      $taxDifference = 0.01 * $vatRate * $order->getShippingAmount() - $order->getShippingTaxAmount();
+      if (array_key_exists($result['vatrate'], $this->taxesMissing)) {
+        $this->taxesMissing[$result['vatrate']] += $taxDifference;
+      }
+      else {
+        $this->taxesMissing[$result['vatrate']] = $taxDifference;
+      }
+    }
+
+    return $result;
+  }
+
+  /**
+   * Returns an invoice line for a payment charge.
+   *
+   * @param Mage_Sales_Model_Order|Mage_Sales_Model_Order_Creditmemo $order
+   * @param int $maxVatRate
+   *
+   * @return array
+   */
+  protected function addPaymentChargeLine(Mage_Sales_Model_Order_Creditmemo $order, $maxVatRate) {
+    // If we have free shipping we still want to give the line the "correct"
+    // vat rate (for tax reports in Acumulus).
+    $vatRate = $order->getShippingAmount() > 0 ? round(100.0 * $order->getShippingTaxAmount() / $order->getShippingAmount()) : $maxVatRate;
+    // For higher precision, we use the prices as entered by the admin.
+    $paymentAmount = $order->getPaymentchargeAmount();
+    $paymentTax =  $order->getPaymentchargeTaxAmount();
+    if ($this->productPricesIncludeTax()) {
+      // Product prices incl. VAT => payment charges are also incl. VAT.
+      $paymentAmount -= $paymentTax;
+    }
+    $vatRate = 100.0 * $paymentTax / $paymentAmount;
+    return array(
+      'itemnumber' => '',
+      'product' => $this->acumulusConfig->t('payment_costs'),
+      'unitprice' => number_format($paymentAmount, 4, '.', ''),
+      'vatrate' => number_format($vatRate, 0),
+      'quantity' => 1,
+    );
+  }
+
+  /**
+   * Returns a line with the discount on this order (if any).
+   *
+   * Magento only supports 1 discount code per order, so at most 1 line is returned.
+   *
+   * @param Mage_Sales_Model_Order|Mage_Sales_Model_Order_Creditmemo $order
+   *
+   * @return array
+   *   0 or 1 discount lines.
+   */
+  protected function addDiscountLines($order) {
+    $result = array();
+    if ($order->getDiscountAmount() != 0) {
+      $result[] = $this->addDiscountLine($order);
+    }
+    return $result;
+  }
+
+  /**
+   * @param Mage_Sales_Model_Order|Mage_Sales_Model_Order_Creditmemo $order
+   *
+   * @return array
+   */
+  protected function getDiscountInfo($order) {
+    $partialPayment = false;
+    $discountAmount = -$order->getDiscountAmount();
+    if ($order->getHiddenTaxAmount() != 0) {
+      $discountTax = $order->getHiddenTaxAmount();
+    }
+    else {
+      // Depending on the settings, we might be missing some tax, or we have to
+      // treat this discount as a (partial) payment.
+      // Only situation encountered so far where we are missing tax: catalog
+      // prices are ex VAT (as are the discount amounts).
+      $discountTax = 0.0;
+      foreach ($this->taxesMissing as /*$taxRate =>*/ $taxAmount) {
+        $discountTax += $taxAmount;
+      }
+      // If we are not missing tax we assume it to be a partial payment.
+      if ($this->floatsAreEqual($discountTax, 0.0, 0.02)) {
+        $partialPayment = true;
+      }
+    }
+
+    if ($partialPayment) {
+      $vatRate = -1;
+    }
+    else {
+      if ($this->productPricesIncludeTax()) {
+        // Product prices incl. VAT => discount amounts are also incl. VAT.
+        $discountAmount -= $discountTax;
+      }
+      $vatRate = 100.0 * $discountTax / $discountAmount;
+    }
+
+    return array('amount' => $discountAmount, 'vatRate' => $vatRate);
+  }
+
+  /**
+   * @param Mage_Sales_Model_Order $order
+   *
+   * @return string
+   */
+  protected function getDiscountDescription($order) {
+    $description = '';
+    if ($order->getDiscountDescription()) {
+      $description =  $order->getDiscountDescription();
+    }
+    else if ($order->getCouponCode()) {
+      $description =  $order->getCouponCode();
+    }
+    $description = $description ? $this->acumulusConfig->t('discount_code') . ' ' . $description : $this->acumulusConfig->t('discount');
+    return $description;
+  }
 
   /**
    * Adds a value only if it is not empty.
@@ -201,6 +384,17 @@ class Siel_Acumulus_Model_InvoiceAddBase {
    */
   protected function useMarginScheme(/*$line*/) {
     return false;
+  }
+
+  /**
+   * @param float $f1
+   * @param float $f2
+   * @param float $maxDiff
+   *
+   * @return bool
+   */
+  protected function floatsAreEqual($f1, $f2, $maxDiff = 0.005) {
+    return abs($f2 - $f1) < $maxDiff;
   }
 
 }

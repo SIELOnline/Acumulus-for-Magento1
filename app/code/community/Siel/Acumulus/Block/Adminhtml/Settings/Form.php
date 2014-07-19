@@ -228,15 +228,37 @@ class Siel_Acumulus_Block_Adminhtml_Settings_Form extends Mage_Adminhtml_Block_W
     // 3rd fieldset: version information.
     $env = $this->acumulusConfig->getEnvironment();
     $fieldset = $form->addFieldset('versioninfo_fieldset', array('legend' => $this->t('versionInformationHeader')));
+
     $fieldset->addField('note3', 'note', array(
       'text' => "Acumulus module {$env['moduleVersion']} (API: {$env['libraryVersion']}) voor {$env['shopName']} {$env['shopVersion']}",
       'after_element_html' => $this->getNote('desc_versionInformation'),
     ));
 
+    $options = array(
+      array(
+        'value' => ConfigInterface::Debug_None,
+        'label' => $this->t('option_debug_1'),
+      ),
+      array(
+        'value' => ConfigInterface::Debug_SendAndLog,
+        'label' => $this->t('option_debug_2')
+      ),
+      array(
+        'value' => ConfigInterface::Debug_StayLocal,
+        'label' => $this->t('option_debug_3')
+      ),
+    );
+    $fieldset->addField('debug', 'radios', array(
+      'label' => $this->t('field_debug'),
+      'name' => 'debug',
+      'values' => $options,
+      'after_element_html' => $this->getNote('desc_debug'),
+    ));
+
     $post = $this->getRequest()->getPost();
     unset($post['form_key']);
 
-    $values = $post + $this->acumulusConfig->getCredentials() + $this->acumulusConfig->getInvoiceSettings();
+    $values = $post + $this->acumulusConfig->getCredentials() + $this->acumulusConfig->getInvoiceSettings() + array('debug' => $this->acumulusConfig->getDebug());
     $values['clientData'] = array();
     if (!empty($values['sendCustomer'])) {
       $values['clientData'][] = 'sendCustomer';
