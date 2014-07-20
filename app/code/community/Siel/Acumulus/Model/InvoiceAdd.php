@@ -206,45 +206,27 @@ class Siel_Acumulus_Model_InvoiceAdd extends Siel_Acumulus_Model_InvoiceAddBase 
       }
     }
 
-    // Administer taxes on discount per tax rate.
-    if ($item->getDiscountAmount() > 0.0) {
+    // Administer discount amounts and taxes per tax rate.
+    if ($result['vatrate'] != -1 && $item->getDiscountAmount() > 0.0) {
       $taxDifference = (0.01 * $item->getTaxPercent() * $item->getQtyOrdered() * $unitPrice) - $item->getTaxAmount();
+      if (array_key_exists($result['vatrate'], $this->discountAmounts)) {
+        $this->discountAmounts[$result['vatrate']] += $item->getDiscountAmount();
+      }
+      else {
+        $this->discountAmounts[$result['vatrate']] = $item->getDiscountAmount();
+      }
       if (!$this->floatsAreEqual($taxDifference, 0.0)) {
-        if (array_key_exists($result['vatrate'], $this->taxesMissing)) {
-          $this->taxesMissing[$result['vatrate']] += $taxDifference;
+        if (array_key_exists($result['vatrate'], $this->discountAmounts)) {
+          $this->discountTaxAmounts[$result['vatrate']] += $taxDifference;
         }
         else {
-          $this->taxesMissing[$result['vatrate']] = $taxDifference;
+          $this->discountTaxAmounts[$result['vatrate']] = $taxDifference;
         }
       }
     }
 
     $result = array_merge(array($result), $childLines);
     return $result;
-  }
-
-  /**
-   * Add the line(s) for 1 discount.
-   *
-   * We assume the hidden_tax_amount to be the tax on the discount. But take
-   * note of the following:
-   * - it is a positive number (unlike the discount amount).
-   * - there are cases where this amount = 0, notably when the catalog prices
-   *   are ex VAT.
-   *
-   * @param Mage_Sales_Model_Order $order
-   *
-   * @return array
-   */
-  protected function addDiscountLine(Mage_Sales_Model_Order $order) {
-    $discountInfo = $this->getDiscountInfo($order);
-    return array(
-      'itemnumber' => '',
-      'product' => $this->getDiscountDescription($order),
-      'unitprice' => number_format(-$discountInfo['amount'], 4, '.', ''),
-      'vatrate' => number_format($discountInfo['vatRate'], 0),
-      'quantity' => 1,
-    );
   }
 
 }

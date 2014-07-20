@@ -18,8 +18,11 @@ abstract class Siel_Acumulus_Model_InvoiceAddBase {
   /** @var WebAPI */
   protected $webAPI;
 
+  /** @var array Discount amounts per vat rate. */
+  protected $discountAmounts;
+
   /** @var array */
-  protected $taxesMissing;
+  protected $discountTaxAmounts;
 
   public function __construct() {
     $this->acumulusConfig = Mage::helper('acumulus')->getAcumulusConfig();
@@ -66,7 +69,7 @@ abstract class Siel_Acumulus_Model_InvoiceAddBase {
    * @return array
    */
   protected function convertOrderToAcumulusInvoice($order) {
-    $this->taxesMissing = array();
+    $this->discountTaxAmounts = array();
     $invoice = array();
     $invoice['customer'] = $this->addCustomer($order);
     $invoice['customer']['invoice'] = $this->addInvoice($order, $invoice['customer']);
@@ -155,10 +158,12 @@ abstract class Siel_Acumulus_Model_InvoiceAddBase {
    */
   protected function addFeeLines($order, $maxVatRate) {
     $result = array();
+    // Also add a line with free shipping (0.0 versus null)
     if ($order->getShippingAmount() !== null) {
       $result[] = $this->addShippingLine($order, $maxVatRate);
     }
-    if ($order->getPaymentchargeAmount() !== null) {
+    // Do not add a line at all if there are no payment charges.
+    if ($order->getPaymentchargeAmount() != 0) {
       $result[] = $this->addPaymentChargeLine($order, $maxVatRate);
     }
     return $result;
@@ -189,12 +194,18 @@ abstract class Siel_Acumulus_Model_InvoiceAddBase {
 
     // Administer taxes on discount per tax rate.
     if ($order->getShippingDiscountAmount() > 0.0) {
-      $taxDifference = 0.01 * $vatRate * $order->getShippingAmount() - $order->getShippingTaxAmount();
-      if (array_key_exists($result['vatrate'], $this->taxesMissing)) {
-        $this->taxesMissing[$result['vatrate']] += $taxDifference;
+      if (array_key_exists($vatRate, $this->discountTaxAmounts)) {
+        $this->discountAmounts[$vatRate] += $order->getShippingDiscountAmount();
       }
       else {
-        $this->taxesMissing[$result['vatrate']] = $taxDifference;
+        $this->discountAmounts[$vatRate] = $order->getShippingDiscountAmount();
+      }
+      $taxDifference = 0.01 * $vatRate * $order->getShippingAmount() - $order->getShippingTaxAmount();
+      if (array_key_exists($vatRate, $this->discountTaxAmounts)) {
+        $this->discountTaxAmounts[$vatRate] += $taxDifference;
+      }
+      else {
+        $this->discountTaxAmounts[$vatRate] = $taxDifference;
       }
     }
 
@@ -243,7 +254,17 @@ abstract class Siel_Acumulus_Model_InvoiceAddBase {
   protected function addDiscountLines($order) {
     $result = array();
     if ($order->getDiscountAmount() != 0) {
-      $result[] = $this->addDiscountLine($order);
+      if ($this->floatsAreEqual(array_sum($this->discountTaxAmounts), 0.0, 0.02)) {
+        // If it is an order, treat the discount as a partial payment.
+        // If this is a credit memo, the partial payment is to be refunded as
+        // well, so it should not be deducted from the amount to refund.
+        if ($order instanceof Mage_Sales_Model_Order) {
+          $result[] = $this->addPartialPaymentLine($order);
+        }
+      }
+      else {
+        $result += $this->addDiscountLinePerTaxRate($order);
+      }
     }
     return $result;
   }
@@ -253,47 +274,60 @@ abstract class Siel_Acumulus_Model_InvoiceAddBase {
    *
    * @return array
    */
-  protected function getDiscountInfo($order) {
-    $partialPayment = false;
-    $discountAmount = -$order->getDiscountAmount();
-    if ($order->getHiddenTaxAmount() != 0) {
-      $discountTax = $order->getHiddenTaxAmount();
+  protected function addDiscountLinePerTaxRate($order) {
+    $result= array();
+    foreach ($this->discountAmounts as $vatRate => $discountAmount) {
+      $result[] = $this->addDiscountLine($order, $discountAmount, $vatRate);
     }
-    else {
-      // Depending on the settings, we might be missing some tax, or we have to
-      // treat this discount as a (partial) payment.
-      // Only situation encountered so far where we are missing tax: catalog
-      // prices are ex VAT (as are the discount amounts).
-      $discountTax = 0.0;
-      foreach ($this->taxesMissing as /*$taxRate =>*/ $taxAmount) {
-        $discountTax += $taxAmount;
-      }
-      // If we are not missing tax we assume it to be a partial payment.
-      if ($this->floatsAreEqual($discountTax, 0.0, 0.02)) {
-        $partialPayment = true;
-      }
-    }
+    return $result;
+  }
 
-    if ($partialPayment) {
-      $vatRate = -1;
-    }
-    else {
-      if ($this->productPricesIncludeTax()) {
-        // Product prices incl. VAT => discount amounts are also incl. VAT.
-        $discountAmount -= $discountTax;
-      }
-      $vatRate = 100.0 * $discountTax / $discountAmount;
-    }
+  /**
+   * @param Mage_Sales_Model_Order|Mage_Sales_Model_Order_Creditmemo $order
+   *
+   * @return array
+   */
+  protected function addPartialPaymentLine($order) {
+    return array(
+      'itemnumber' => '',
+      'product' => $this->getDiscountDescription($order, -1),
+      'unitprice' => number_format(-$order->getDiscountAmount(), 4, '.', ''),
+      'vatrate' => number_format(-1, 0),
+      'quantity' => 1,
+    );
+  }
 
-    return array('amount' => $discountAmount, 'vatRate' => $vatRate);
+  /**
+   * Add a discount line for 1 vat rate.
+   *
+   * @param Mage_Sales_Model_Order $order
+   * @param float $discountAmount
+   * @param int $vatRate
+   *
+   * @return array
+   */
+  protected function addDiscountLine($order, $discountAmount, $vatRate) {
+    if ($this->productPricesIncludeTax()) {
+      // Product prices incl. VAT => discount amounts are also incl. VAT: make
+      // it an amount ex vat.
+      $discountAmount = $discountAmount / (1 + $vatRate/100);
+    }
+    return array(
+      'itemnumber' => '',
+      'product' => $this->getDiscountDescription($order, $vatRate),
+      'unitprice' => number_format($discountAmount * ($order instanceof Mage_Sales_Model_Order ? -1 : 1), 4, '.', ''),
+      'vatrate' => number_format($vatRate, 0),
+      'quantity' => 1,
+    );
   }
 
   /**
    * @param Mage_Sales_Model_Order $order
+   * @param int $vatRate
    *
    * @return string
    */
-  protected function getDiscountDescription($order) {
+  protected function getDiscountDescription($order, $vatRate) {
     $description = '';
     if ($order->getDiscountDescription()) {
       $description =  $order->getDiscountDescription();
@@ -301,7 +335,15 @@ abstract class Siel_Acumulus_Model_InvoiceAddBase {
     else if ($order->getCouponCode()) {
       $description =  $order->getCouponCode();
     }
-    $description = $description ? $this->acumulusConfig->t('discount_code') . ' ' . $description : $this->acumulusConfig->t('discount');
+    if ($vatRate == -1) {
+      $description = $description ? $this->acumulusConfig->t('coupon_code') . ' ' . $description : $this->acumulusConfig->t('coupon_code');
+    }
+    else {
+      $description = $description ? $this->acumulusConfig->t('discount_code') . ' ' . $description : $this->acumulusConfig->t('discount');
+      if ($vatRate && count($this->discountTaxAmounts) > 1) {
+       $description .= " ($vatRate%)";
+      }
+    }
     return $description;
   }
 

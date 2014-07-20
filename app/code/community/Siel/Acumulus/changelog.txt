@@ -53,6 +53,8 @@ Magento-1.9-Acumulus-3.1.0
 * Support en debug optie toegevoegd aan instellingenscherm.
 * Handmatig (her)verzenden toegevoegd.
 * BTW berekeningen gingen fout als catalogusprijzen ex. BTW worden opgegeven.
+* Kortingen die verdeeld moeten worden over producten met verschillende BTW
+  tarieven gingen fout.
 * Betalingskosten werden niet meegestuurd naar Acumulus.
 * Library 3.3.5 (zie bij Library).
 

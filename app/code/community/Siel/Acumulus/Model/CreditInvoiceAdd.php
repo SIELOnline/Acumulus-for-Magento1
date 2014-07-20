@@ -55,8 +55,6 @@ class Siel_Acumulus_Model_CreditInvoiceAdd extends Siel_Acumulus_Model_InvoiceAd
     // Determine payment status based on credit memo state..
     if ($creditMemo->getState() == Mage_Sales_Model_Order_Creditmemo::STATE_REFUNDED) {
       $result['paymentstatus'] = WebAPI::PaymentStatus_Paid;
-      // @todo: can we find the date that it got refunded.
-      // For now: take date created.
       $result['paymentdate'] = substr($creditMemo->getCreatedAt(), 0, strlen('yyyy-mm-dd'));
     }
     else {
@@ -122,15 +120,21 @@ class Siel_Acumulus_Model_CreditInvoiceAdd extends Siel_Acumulus_Model_InvoiceAd
     $result['quantity'] = number_format($item->getQty(), 2, '.', '');
     $result['vatrate'] = number_format($vatRate, 0);
 
-    // Administer taxes on discount per tax rate.
-    if ($item->getDiscountAmount() > 0.0) {
+    // Administer discount amounts and taxes per tax rate.
+    if ($vatRate != -1 && $item->getDiscountAmount() > 0.0) {
       $taxDifference = (0.01 * $item->getTaxPercent() * $item->getQtyOrdered() * $unitPrice) - $item->getTaxAmount();
+      if (array_key_exists($vatRate, $this->discountAmounts)) {
+        $this->discountAmounts[$vatRate] += $item->getDiscountAmount();
+      }
+      else {
+        $this->discountAmounts[$vatRate] = $item->getDiscountAmount();
+      }
       if (!$this->floatsAreEqual($taxDifference, 0.0)) {
-        if (array_key_exists($result['vatrate'], $this->taxesMissing)) {
-          $this->taxesMissing[$result['vatrate']] += $taxDifference;
+        if (array_key_exists($vatRate, $this->discountAmounts)) {
+          $this->discountTaxAmounts[$vatRate] += $taxDifference;
         }
         else {
-          $this->taxesMissing[$result['vatrate']] = $taxDifference;
+          $this->discountTaxAmounts[$vatRate] = $taxDifference;
         }
       }
     }
@@ -138,27 +142,4 @@ class Siel_Acumulus_Model_CreditInvoiceAdd extends Siel_Acumulus_Model_InvoiceAd
     return $result;
   }
 
-  /**
-   * Add the line(s) for 1 discount.
-   *
-   * We assume the hidden_tax_amount to be the tax on the discount. But take
-   * note of the following:
-   * - it is a positive number (unlike the discount amount).
-   * - there are cases where this amount = 0, notably when the catalog prices
-   *   are ex VAT.
-   *
-   * @param Mage_Sales_Model_Order_Creditmemo $creditMemo
-   *
-   * @return array
-   */
-  protected function addDiscountLine(Mage_Sales_Model_Order_Creditmemo $creditMemo) {
-    $discountInfo = $this->getDiscountInfo($creditMemo);
-    return array(
-      'itemnumber' => '',
-      'product' => $this->getDiscountDescription($creditMemo),
-      'unitprice' => number_format($discountInfo['amount'], 4, '.', ''),
-      'vatrate' => number_format($discountInfo['vatRate'], 0),
-      'quantity' => 1,
-    );
-  }
 }
