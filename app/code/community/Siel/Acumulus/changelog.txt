@@ -55,6 +55,8 @@ Magento-1.9-Acumulus-3.1.0
 * BTW berekeningen gingen fout als catalogusprijzen ex. BTW worden opgegeven.
 * Kortingen die verdeeld moeten worden over producten met verschillende BTW
   tarieven gingen fout.
+* Configureerbaar product verschijnt meestal 2 keerl op de factuur, eenmaal met
+  prijs, eenmaal zonder prijs. Die zonder prijs wordt niet meer verstuurd.
 * Betalingskosten werden niet meegestuurd naar Acumulus.
 * Library 3.3.5 (zie bij Library).
 

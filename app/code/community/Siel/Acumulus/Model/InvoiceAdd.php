@@ -155,14 +155,28 @@ class Siel_Acumulus_Model_InvoiceAdd extends Siel_Acumulus_Model_InvoiceAddBase 
     $result['quantity'] = number_format($item->getQtyOrdered(), 2, '.', '');
     $result['vatrate'] = number_format($item->getTaxPercent(), 0);
 
-    if (count($item->getChildrenItems()) > 0) {
-      // Composed product: also add child lines, a.o. to be able to print a
-      // packing slip in Acumulus.
-      foreach($item->getChildrenItems() as $child) {
-        $childLine = $this->addItemLine($child);
-        $childLines[] = reset($childLine);
-      }
+    // Also add child lines for composed products, a.o. to be able to print a
+    // packing slip in Acumulus.
+    foreach($item->getChildrenItems() as $child) {
+      $childLine = $this->addItemLine($child);
+      $childLines[] = reset($childLine);
+    }
 
+    // If:
+    // - there is exactly 1 child line
+    // - for the same product, item number, and quantity
+    // - with no price info on the child
+    // We seem to be processing a configurable product that for some reason
+    // appears twice:
+    // - do not add the child.
+    if (count($childLines) === 1
+      && $result['product'] === $childLines[0]['product']
+      && $result['itemnumber'] === $childLines[0]['itemnumber']
+      && $result['quantity'] === $childLines[0]['quantity']) {
+      $childLines = array();
+    }
+    // keep price info on bundle level or child level?
+    if (count($childLines) > 0) {
       if ($item->getPriceInclTax() > 0.0 && ($item->getTaxPercent() > 0 || $item->getTaxAmount() == 0.0)) {
         // If the bundle line contains valid price and tax info, we remove that
         // info from all child lines (to prevent accounting amounts twice).
