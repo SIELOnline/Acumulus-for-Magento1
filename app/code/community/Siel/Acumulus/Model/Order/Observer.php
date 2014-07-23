@@ -79,7 +79,7 @@ class Siel_Acumulus_Model_Order_Observer extends Mage_Core_Model_Abstract {
     /** @var Siel_Acumulus_Model_InvoiceAdd $invoiceAdd */
     $invoiceAdd = Mage::getModel('acumulus/invoiceAdd');
     $result = $invoiceAdd->send($order);
-    $this->processResults($result, $order->getIncrementId());
+    $this->processResults($result, $order, $order->getIncrementId());
     return !empty($result['invoice']['invoicenumber']);
   }
 
@@ -107,11 +107,23 @@ class Siel_Acumulus_Model_Order_Observer extends Mage_Core_Model_Abstract {
     /** @var Siel_Acumulus_Model_CreditInvoiceAdd $invoiceAdd */
     $invoiceAdd = Mage::getModel('acumulus/creditInvoiceAdd');
     $result = $invoiceAdd->send($creditMemo);
-    $this->processResults($result, 'Credit memo ' . $creditMemo->getIncrementId());
+    $this->processResults($result, $creditMemo, 'Credit memo ' . $creditMemo->getIncrementId());
     return !empty($result['invoice']['invoicenumber']);
   }
 
-  protected function processResults($result, $order_id) {
+  /**
+   * @param array $result
+   * @param Mage_Sales_Model_Order|Mage_Sales_Model_Order_Creditmemo $order
+   * @param string $order_id
+   */
+  protected function processResults($result, $order, $order_id) {
+    if (!empty($result['invoice'])) {
+      /** @var Siel_Acumulus_Model_Entry $entry */
+      $entry = Mage::getModel('acumulus/entry');
+      $entry = $entry->getByOrder($order);
+      $entry->saveEntry($result['invoice'], $order);
+    }
+
     /** @var \Siel\Acumulus\Common\WebAPI $webAPI */
     $webAPI = Mage::helper('acumulus')->getWebAPI();
     $messages = $webAPI->resultToMessages($result);

@@ -43,8 +43,13 @@ Geteste Magento versie(s):
 * 1.8.1.0
 * 1.7.? (getest door klanten, er worden nog wat mogelijke problemen onderzocht)
 
-Magento-1.9-Acumulus-3.1.0
------------------------------------
+Magento-1.7-1.9-Acumulus-3.2.0
+------------------------------
+* Acumulus boekstuknummers voor verstuurde facturen en credit memo's worden nu
+  opgeslagen, zodat we webwinkelorders kunnen koppelen aan Acumulus facturen.
+
+Magento-1.7-1.9-Acumulus-3.1.0
+------------------------------
 * Licentie teksten en deze changelog staan nu bij de code, geen zip in zip meer.
 * Keuze toegevoegd om factuur automatisch te versturen als in Magento de factuur
   aangemaakt wordt.
@@ -55,13 +60,13 @@ Magento-1.9-Acumulus-3.1.0
 * BTW berekeningen gingen fout als catalogusprijzen ex. BTW worden opgegeven.
 * Kortingen die verdeeld moeten worden over producten met verschillende BTW
   tarieven gingen fout.
-* Configureerbaar product verschijnt meestal 2 keerl op de factuur, eenmaal met
+* Configureerbaar product verschijnt meestal 2 keer op de factuur, eenmaal met
   prijs, eenmaal zonder prijs. Die zonder prijs wordt niet meer verstuurd.
 * Betalingskosten werden niet meegestuurd naar Acumulus.
 * Library 3.3.5 (zie bij Library).
 
 Magento-1.9-Acumulus-3.0.0
------------------------------------
+--------------------------
 * Initiële versie van deze volledig herbouwde koppeling.
 * Library 3.3.4 (zie bij Library).
 

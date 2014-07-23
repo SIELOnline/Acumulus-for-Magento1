@@ -2,7 +2,7 @@
 <config>
   <modules>
     <Siel_Acumulus>
-      <version>3.1.0</version>
+      <version>3.2.0</version>
     </Siel_Acumulus>
   </modules>
 
@@ -21,8 +21,26 @@
     <models>
       <acumulus>
         <class>Siel_Acumulus_Model</class>
+        <resourceModel>acumulus_resource</resourceModel>
       </acumulus>
+      <acumulus_resource>
+        <class>Siel_Acumulus_Model_Resource</class>
+        <entities>
+          <entry>
+            <table>acumulus_entries</table>
+          </entry>
+        </entities>
+      </acumulus_resource>
     </models>
+
+    <resources>
+      <acumulus_setup>
+        <setup>
+          <module>Siel_Acumulus</module>
+          <class>Siel_Acumulus_Model_Resource_Setup</class>
+        </setup>
+      </acumulus_setup>
+    </resources>
 
     <blocks>
       <acumulus>
