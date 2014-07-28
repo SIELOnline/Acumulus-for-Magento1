@@ -33,9 +33,7 @@ $table = $installer->getConnection()->newTable($installer->getTable('acumulus/en
   ->addColumn('created', Varien_Db_Ddl_Table::TYPE_TIMESTAMP, null, array(
     'default' => Varien_Db_Ddl_Table::TIMESTAMP_INIT,
   ), 'Timestamp created')
-  ->addColumn('updated', Varien_Db_Ddl_Table::TYPE_TIMESTAMP, null, array(
-    'default' => Varien_Db_Ddl_Table::TIMESTAMP_INIT_UPDATE,
-  ), 'Timestamp updated')
+  ->addColumn('updated', Varien_Db_Ddl_Table::TYPE_TIMESTAMP, null, array(), 'Timestamp updated')
   ->addIndex('idx_entry_id', 'entry_id', array('type' => Varien_Db_Adapter_Interface::INDEX_TYPE_UNIQUE))
   ->addForeignKey('fk_order_id', 'order_id', 'sales_flat_order', 'entity_id', Varien_Db_Ddl_Table::ACTION_NO_ACTION, Varien_Db_Ddl_Table::ACTION_NO_ACTION)
   ->addForeignKey('fk_invoice_id', 'invoice_id', 'sales_flat_invoice', 'entity_id', Varien_Db_Ddl_Table::ACTION_NO_ACTION, Varien_Db_Ddl_Table::ACTION_NO_ACTION)

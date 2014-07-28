@@ -15,11 +15,10 @@ class Siel_Acumulus_Model_InvoiceAdd extends Siel_Acumulus_Model_InvoiceAddBase 
    * Add the invoice part to the Acumulus invoice.
    *
    * @param Mage_Sales_Model_Order $order
-   * @param array $customer
    *
    * @return array
    */
-  protected function addInvoice($order, array $customer) {
+  protected function addInvoice($order) {
     $result = array();
 
     /** @var \Mage_Sales_Model_Order_Invoice $invoice */
@@ -66,12 +65,6 @@ class Siel_Acumulus_Model_InvoiceAdd extends Siel_Acumulus_Model_InvoiceAddBase 
     }
 
     $result['description'] = $this->acumulusConfig->t('order_id') . ' ' . $order->getIncrementId();
-
-    // Add all order lines.
-    $result['line'] = $this->addInvoiceLines($order);
-
-    // Determine vat type.
-    $result['vattype'] = $this->webAPI->getVatType($customer, $result);
 
     return $result;
   }

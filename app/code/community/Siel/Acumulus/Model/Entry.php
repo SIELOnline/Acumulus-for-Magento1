@@ -13,6 +13,9 @@
  * @method int|null getInvoiceId()
  * @method Siel_Acumulus_Model_Entry setCreditMemoId(int $value)
  * @method int|null getCreditMemoId()
+ * @method int getCreated()
+ * @method Siel_Acumulus_Model_Entry setUpdated(int $value)
+ * @method int getUpdated()
  */
 class Siel_Acumulus_Model_Entry extends Mage_Core_Model_Abstract {
 
@@ -65,23 +68,23 @@ class Siel_Acumulus_Model_Entry extends Mage_Core_Model_Abstract {
       ->setToken($acumulusInvoice['token'])
       ->setOrderId($this->getOrder($order)->getId())
       ->setInvoiceId($this->getInvoice($order)->getId())
-      ->setCreditmemoId($this->getCreditMemo($order)->getId())
-      ->unsetData('created')
-      ->unsetData('updated');
+      ->setCreditmemoId($this->getCreditMemo($order)->getId());
     return $this->save();
   }
 
   /**
-   * Overrides the save() method to clear the created and updated columns,
-   * before being written to the database. These timestamps are set by the
-   * database ands should not be set by the application.
+   * Overrides the save() method to clear the created column and set the updated
+   * column before being written to the database. The created timestamp is set
+   * by the database and should not be set by the application. As MySQl < 5.6.5
+   * only allows one timestamp with a default value we do set the updated
+   * timestamp in code (http://stackoverflow.com/a/17498167/1475662).
    *
    * @return $this
    */
   public function save() {
     $this
-      ->unsetData('created')
-      ->unsetData('updated');
+      ->setUpdated(time())
+      ->unsetData('created');
     return parent::save();
   }
 

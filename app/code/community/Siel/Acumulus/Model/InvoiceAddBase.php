@@ -72,7 +72,8 @@ abstract class Siel_Acumulus_Model_InvoiceAddBase {
     $this->discountTaxAmounts = array();
     $invoice = array();
     $invoice['customer'] = $this->addCustomer($order);
-    $invoice['customer']['invoice'] = $this->addInvoice($order, $invoice['customer']);
+    $invoice['customer']['invoice'] = $this->addInvoice($order);
+    $invoice['customer']['invoice']['line'] = $this->addInvoiceLines($order);
     return $invoice;
   }
 

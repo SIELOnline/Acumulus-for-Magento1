@@ -25,11 +25,10 @@ class Siel_Acumulus_Model_CreditInvoiceAdd extends Siel_Acumulus_Model_InvoiceAd
    * Add the invoice part to the Acumulus invoice.
    *
    * @param Mage_Sales_Model_Order_Creditmemo $creditMemo
-   * @param array $customer
    *
    * @return array
    */
-  protected function addInvoice($creditMemo, array $customer) {
+  protected function addInvoice($creditMemo) {
     $result = array();
 
     // Set concept to 0: Issue invoice, no concept.
@@ -62,12 +61,6 @@ class Siel_Acumulus_Model_CreditInvoiceAdd extends Siel_Acumulus_Model_InvoiceAd
     }
 
     $result['description'] = $this->acumulusConfig->t('refund') . ' ' .$this->acumulusConfig->t('order_id') . ' ' . $creditMemo->getOrder()->getIncrementId();
-
-    // Add all order lines.
-    $result['line'] = $this->addInvoiceLines($creditMemo);
-
-    // Determine vat type.
-    $result['vattype'] = $this->webAPI->getVatType($customer, $result);
 
     return $result;
   }
