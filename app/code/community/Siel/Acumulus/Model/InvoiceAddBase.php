@@ -109,13 +109,11 @@ abstract class Siel_Acumulus_Model_InvoiceAddBase {
     $this->addEmpty($result, 'city', $invoiceAddress->getCity());
     if ($invoiceAddress->getCountryId()) {
       $result['countrycode'] = $invoiceAddress->getCountry();
-      $result['locationcode'] = $this->webAPI->getLocationCode($result['countrycode']);
     }
     $this->addIfNotEmpty($result, 'vatnumber', $order->getCustomerTaxvat());
     $this->addIfNotEmpty($result, 'telephone', $invoiceAddress->getTelephone());
     $this->addIfNotEmpty($result, 'fax', $invoiceAddress->getFax());
     $result['email'] = $invoiceAddress->getEmail();
-    $result['overwriteifexists'] = $this->acumulusConfig->get('overwriteIfExists') ? WebAPI::OverwriteIfExists_Yes : WebAPI::OverwriteIfExists_No;
 
     return $result;
   }

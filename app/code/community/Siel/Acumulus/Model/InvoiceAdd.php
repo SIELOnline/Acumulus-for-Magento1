@@ -25,9 +25,6 @@ class Siel_Acumulus_Model_InvoiceAdd extends Siel_Acumulus_Model_InvoiceAddBase 
     $invoices = $order->getInvoiceCollection();
     $invoice = count($invoices) > 0 ? $invoices->getFirstItem() : null;
 
-    // Set concept to 0: Issue invoice, no concept.
-    $result['concept'] = WebAPI::Concept_No;
-
     $invoiceNrSource = $this->acumulusConfig->get('invoiceNrSource');
     if ($invoiceNrSource != ConfigInterface::InvoiceNrSource_Acumulus) {
       $result['number'] = $order->getIncrementId();

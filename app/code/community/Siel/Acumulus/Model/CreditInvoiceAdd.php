@@ -31,9 +31,6 @@ class Siel_Acumulus_Model_CreditInvoiceAdd extends Siel_Acumulus_Model_InvoiceAd
   protected function addInvoice($creditMemo) {
     $result = array();
 
-    // Set concept to 0: Issue invoice, no concept.
-    $result['concept'] = WebAPI::Concept_No;
-
     // Always use the number of the credit memo, regardless any setting about what
     // number to use.
     $invoiceNrSource = $this->acumulusConfig->get('invoiceNrSource');
