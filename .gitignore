@@ -10,7 +10,6 @@ interdiff.txt
 # Ignore library
 **/Siel/Acumulus/Common
 
-
 # Shared files
 **/Siel/Acumulus/changelog.txt
 **/Siel/Acumulus/LICENTIE.txt
