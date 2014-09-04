@@ -12,6 +12,16 @@ class Siel_Acumulus_Helper_Data extends Mage_Core_Helper_Abstract {
   /** @var array|string */
   private $connectionTestResult = NULL;
 
+  /** @var string */
+  private $connectionTestDetail = '';
+
+  /**
+   * @return string
+   */
+  public function getConnectionTestDetail() {
+    return $this->connectionTestDetail;
+  }
+
   public function t($key) {
     $this->init();
     return $this->acumulusConfig->t($key);
@@ -48,6 +58,8 @@ class Siel_Acumulus_Helper_Data extends Mage_Core_Helper_Abstract {
           $this->connectionTestResult = $this->t('message_error_auth');
         }
         else {
+          $this->connectionTestDetail = $this->getWebAPI()->resultToMessages($this->connectionTestResult);
+          $this->connectionTestDetail = $this->getWebAPI()->messagesToHtml($this->connectionTestDetail);
           $this->connectionTestResult = $this->t('message_error_comm');
         }
       }

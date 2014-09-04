@@ -12,8 +12,11 @@ class Siel_Acumulus_Block_Adminhtml_Settings_Form extends Mage_Adminhtml_Block_W
   /** @var \Siel\Acumulus\Common\WebAPI */
   private $webAPI;
 
-  /** @var array contact type picklist */
+  /** @var array|string contact type picklist */
   private $connectionTestResult;
+
+  /** @var string details about a connection test error message */
+  private $connectionTestDetail;
 
   private function t($key) {
     return Mage::helper('acumulus')->t($key);
@@ -21,6 +24,10 @@ class Siel_Acumulus_Block_Adminhtml_Settings_Form extends Mage_Adminhtml_Block_W
 
   private function getNote($key) {
     return '<p class="note">' . $this->t($key) . '</p>';
+  }
+
+  private function getDiv($key) {
+    return '<div class="note">' . $this->t($key) . '</div>';
   }
 
 
@@ -85,9 +92,18 @@ class Siel_Acumulus_Block_Adminhtml_Settings_Form extends Mage_Adminhtml_Block_W
     $accountOk = $this->checkAccountSettings();
     if (!$accountOk) {
       // Account details incomplete or incorrect: show message.
-      $fieldset->addField('note2a', 'note', array(
-        'text' => $this->connectionTestResult,
-      ));
+      $detail = Mage::helper('acumulus')->getConnectionTestDetail();
+      if (!empty($detail)) {
+        $fieldset->addField('note2a', 'note', array(
+          'text' => $this->connectionTestResult,
+          'after_element_html' => $this->getDiv($detail),
+        ));
+      }
+      else {
+        $fieldset->addField('note2a', 'note', array(
+          'text' => $this->connectionTestResult,
+        ));
+      }
     }
     else {
       $fieldset->addField('note2b', 'note', array(
