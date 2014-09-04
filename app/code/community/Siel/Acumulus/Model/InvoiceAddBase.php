@@ -134,12 +134,25 @@ abstract class Siel_Acumulus_Model_InvoiceAddBase {
    */
   protected function addInvoiceLines($order) {
     $itemLines = $this->addItemLines($order);
+    $manualLines = $this->addManualLines($order);
     $maxVatRate = $this->getMaxVatRate($itemLines);
     $feeLines = $this->addFeeLines($order, $maxVatRate);
     $discountLines = $this->addDiscountLines($order);
 
-    $result = array_merge($itemLines, $feeLines, $discountLines);
+    $result = array_merge($itemLines, $manualLines, $feeLines, $discountLines);
     return $result;
+  }
+
+  /**
+   * Returns a collection of lines added manually to the invoice.
+   *
+   * @param Mage_Sales_Model_Order|Mage_Sales_Model_Order_Creditmemo $order
+   *
+   * @return array
+   *   array of lines added manually to the invoice.
+   */
+  protected function addManualLines($order) {
+    return array();
   }
 
   /**

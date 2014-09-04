@@ -82,7 +82,8 @@ class Siel_Acumulus_Block_Adminhtml_Settings_Form extends Mage_Adminhtml_Block_W
     // 2nd fieldset: invoice settings
     $fieldset = $form->addFieldset('invoice_fieldset', array('legend' => $this->t('invoiceSettingsHeader')));
     // Check if we can retrieve a picklist. This indicates if the account
-    if (!$this->checkAccountSettings()) {
+    $accountOk = $this->checkAccountSettings();
+    if (!$accountOk) {
       // Account details incomplete or incorrect: show message.
       $fieldset->addField('note2a', 'note', array(
         'text' => $this->connectionTestResult,
@@ -225,12 +226,57 @@ class Siel_Acumulus_Block_Adminhtml_Settings_Form extends Mage_Adminhtml_Block_W
       ));
     }
 
-    // 3rd fieldset: version information.
+    // 3rd fieldset: email as pdf settings.
+    if ($accountOk) {
+      $fieldset = $form->addFieldset('emailaspdf_fieldset', array('legend' => $this->t('emailAsPdfSettingsHeader')));
+
+      $fieldset->addField('emailAsPdf', 'checkboxes', array(
+        'label' => $this->t('field_emailAsPdf'),
+        'name' => 'emailAsPdf[]',
+        'values' => array(
+          array(
+            'value' => 'emailAsPdf',
+            'label' => $this->t('option_emailAsPdf'),
+          ),
+        ),
+        'after_element_html' => $this->getNote('desc_emailAsPdf'),
+      ));
+
+      $fieldset->addField('emailFrom', 'text', array(
+          'name' => 'emailFrom',
+          'label' => $this->t('field_emailFrom'),
+          'title' => $this->t('field_emailFrom'),
+          'after_element_html' => $this->getNote('desc_emailFrom'),
+          'required' => FALSE,
+        )
+      );
+
+      $fieldset->addField('emailBcc', 'text', array(
+          'name' => 'emailBcc',
+          'label' => $this->t('field_emailBcc'),
+          'title' => $this->t('field_emailBcc'),
+          'after_element_html' => $this->getNote('desc_emailBcc'),
+          'required' => FALSE,
+        )
+      );
+
+      $fieldset->addField('subject', 'text', array(
+          'name' => 'subject',
+          'label' => $this->t('field_subject'),
+          'title' => $this->t('field_subject'),
+          'after_element_html' => $this->getNote('desc_subject'),
+          'required' => FALSE,
+        )
+      );
+    }
+
+
+    // 4th fieldset: version information.
     $env = $this->acumulusConfig->getEnvironment();
     $fieldset = $form->addFieldset('versioninfo_fieldset', array('legend' => $this->t('versionInformationHeader')));
 
     $fieldset->addField('note3', 'note', array(
-      'text' => "Acumulus module {$env['moduleVersion']} (API: {$env['libraryVersion']}) voor {$env['shopName']} {$env['shopVersion']}",
+      'text' => "Acumulus module {$env['moduleVersion']} (API: {$env['libraryVersion']}) voor {$env['shopName']} {$env['shopVersion']}.",
       'after_element_html' => $this->getNote('desc_versionInformation'),
     ));
 
@@ -258,7 +304,7 @@ class Siel_Acumulus_Block_Adminhtml_Settings_Form extends Mage_Adminhtml_Block_W
     $post = $this->getRequest()->getPost();
     unset($post['form_key']);
 
-    $values = $post + $this->acumulusConfig->getCredentials() + $this->acumulusConfig->getInvoiceSettings() + array('debug' => $this->acumulusConfig->getDebug());
+    $values = $post + $this->acumulusConfig->getCredentials() + $this->acumulusConfig->getInvoiceSettings() + $this->acumulusConfig->getEmailAsPdfSettings() + array('debug' => $this->acumulusConfig->getDebug());
     $values['clientData'] = array();
     if (!empty($values['sendCustomer'])) {
       $values['clientData'][] = 'sendCustomer';

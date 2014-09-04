@@ -132,4 +132,25 @@ class Siel_Acumulus_Model_CreditInvoiceAdd extends Siel_Acumulus_Model_InvoiceAd
     return $result;
   }
 
+  /**
+   * Returns a collection of lines added manually to the invoice.
+   *
+   * @param Mage_Sales_Model_Order_Creditmemo $creditMemo
+   *
+   * @return array
+   *   array of lines added manually to the invoice.
+   */
+  protected function addManualLines($creditMemo) {
+    $result = array();
+
+    if ($creditMemo->getAdjustment()) {
+      $line['product'] = $this->acumulusConfig->t('refund_adjustment');
+      $line['unitprice'] = number_format(-$creditMemo->getAdjustment(), 4, '.', '');
+      $line['quantity'] = 1;
+      $line['vatrate'] = 0;
+      $result[] = $line;
+    }
+    return $result;
+  }
+
 }
