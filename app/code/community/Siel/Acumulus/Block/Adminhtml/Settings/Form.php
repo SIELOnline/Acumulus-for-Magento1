@@ -185,13 +185,21 @@ class Siel_Acumulus_Block_Adminhtml_Settings_Form extends Mage_Adminhtml_Block_W
         'required' => FALSE,
       ));
 
-      $options = $this->webAPI->getPicklistInvoiceTemplates();
-      $options = $this->picklistToOptions($options['invoicetemplates']);
+      $invoiceTemplates = $this->webAPI->getPicklistInvoiceTemplates();
+      $options = $this->picklistToOptions($invoiceTemplates['invoicetemplates']);
       $fieldset->addField('defaultInvoiceTemplate', 'select', array(
         'label' => $this->t('field_defaultInvoiceTemplate'),
         'name' => 'defaultInvoiceTemplate',
         'values' => $options,
-        'after_element_html' => $this->getNote('desc_defaultInvoiceTemplate'),
+        'required' => FALSE,
+      ));
+
+      $options = $this->picklistToOptions($invoiceTemplates['invoicetemplates'], $this->t('option_same_template'));
+      $fieldset->addField('defaultInvoicePaidTemplate', 'select', array(
+        'label' => $this->t('field_defaultInvoicePaidTemplate'),
+        'name' => 'defaultInvoicePaidTemplate',
+        'values' => $options,
+        'after_element_html' => $this->getNote('desc_defaultInvoiceTemplates'),
         'required' => FALSE,
       ));
 
@@ -347,10 +355,10 @@ class Siel_Acumulus_Block_Adminhtml_Settings_Form extends Mage_Adminhtml_Block_W
     return is_array($this->connectionTestResult);
   }
 
-  private function picklistToOptions($picklist) {
+  private function picklistToOptions($picklist, $labelEmpty = '') {
     $result = array(array(
       'value' => 0,
-      'label' => $this->t('option_empty'),
+      'label' => !empty($labelEmpty) ? $labelEmpty : $this->t('option_empty'),
     ));
     foreach ($picklist as $item) {
       $result[] = array(
