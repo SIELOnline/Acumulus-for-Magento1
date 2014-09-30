@@ -93,7 +93,7 @@ class Siel_Acumulus_Model_CreditInvoiceAdd extends Siel_Acumulus_Model_InvoiceAd
     $result['product'] = $item->getName();
     $this->addIfNotEmpty($result, 'itemnumber', $item->getSku());
 
-    $vatRate = round(100.0 * ($item->getTaxAmount() + $item->getHiddenTaxAmount()) / ($item->getQty() * $item->getPrice()));
+    $vatRate = $item->getPrice() != 0 ? 100.0 * ($item->getTaxAmount() + $item->getHiddenTaxAmount()) / ($item->getQty() * $item->getPrice()) : null;
     if ($this->useMarginScheme($item)) {
       // Send price with VAT.
       $result['unitprice'] = number_format(-$item->getPriceInclTax(), 4, '.', '');
@@ -108,7 +108,7 @@ class Siel_Acumulus_Model_CreditInvoiceAdd extends Siel_Acumulus_Model_InvoiceAd
     }
 
     $result['quantity'] = number_format($item->getQty(), 2, '.', '');
-    $result['vatrate'] = number_format($vatRate, 0);
+    $result['vatrate'] = $vatRate !== null ? number_format($vatRate) : null;
 
     // Administer discount amounts and taxes per tax rate.
     if ($vatRate != -1 && $item->getDiscountAmount() > 0.0) {
