@@ -132,6 +132,20 @@ class Siel_Acumulus_Model_CreditInvoiceAdd extends Siel_Acumulus_Model_InvoiceAd
     return $result;
   }
 
+  protected function addFeeLines($order, $maxVatRate) {
+    $result = parent::addFeeLines($order, $maxVatRate);
+    // Reverse sign of fee lines, remove 0.0 fee lines, those are not refunded,
+    for ($i = count($result) - 1; $i >= 0; $i--) {
+      if ((float) $result[$i]['unitprice'] != 0.0) {
+        $result[$i]['unitprice'] = number_format(-$result[$i]['unitprice'], 4, '.', '');
+      }
+      else {
+        unset($result[$i]);
+      }
+    }
+    return $result;
+  }
+
   /**
    * Returns a collection of lines added manually to the invoice.
    *
@@ -143,7 +157,7 @@ class Siel_Acumulus_Model_CreditInvoiceAdd extends Siel_Acumulus_Model_InvoiceAd
   protected function addManualLines($creditMemo) {
     $result = array();
 
-    if ($creditMemo->getAdjustment()) {
+    if ((float) $creditMemo->getAdjustment() != 0.0) {
       $line['product'] = $this->acumulusConfig->t('refund_adjustment');
       $line['unitprice'] = number_format(-$creditMemo->getAdjustment(), 4, '.', '');
       $line['quantity'] = 1;
