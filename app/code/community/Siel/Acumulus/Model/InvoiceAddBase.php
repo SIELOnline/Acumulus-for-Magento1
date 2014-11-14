@@ -299,10 +299,12 @@ abstract class Siel_Acumulus_Model_InvoiceAddBase {
    * @return array
    */
   protected function addPartialPaymentLine($order) {
+    // Unlike in many other webshop software, $order->getDiscountAmount() will
+    // already be negative.
     return array(
       'itemnumber' => '',
       'product' => $this->getDiscountDescription($order, -1),
-      'unitprice' => number_format(-$order->getDiscountAmount(), 4, '.', ''),
+      'unitprice' => number_format($order->getDiscountAmount(), 4, '.', ''),
       'vatrate' => number_format(-1, 0),
       'quantity' => 1,
     );
