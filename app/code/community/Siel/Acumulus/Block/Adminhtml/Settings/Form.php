@@ -314,6 +314,10 @@ class Siel_Acumulus_Block_Adminhtml_Settings_Form extends Mage_Adminhtml_Block_W
         'label' => $this->t('option_debug_2')
       ),
       array(
+        'value' => ConfigInterface::Debug_TestMode,
+        'label' => $this->t('option_debug_4')
+      ),
+      array(
         'value' => ConfigInterface::Debug_StayLocal,
         'label' => $this->t('option_debug_3')
       ),
