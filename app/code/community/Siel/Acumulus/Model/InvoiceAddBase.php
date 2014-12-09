@@ -3,7 +3,6 @@
  * @file Contains class Siel\Acumulus\Magento\InvoiceAddBase.
  */
 
-use Siel\Acumulus\Common\WebAPI;
 use Siel\Acumulus\Magento\MagentoAcumulusConfig;
 
 /**
@@ -15,9 +14,6 @@ abstract class Siel_Acumulus_Model_InvoiceAddBase {
   /** @var MagentoAcumulusConfig */
   protected $acumulusConfig;
 
-  /** @var WebAPI */
-  protected $webAPI;
-
   /** @var array Discount amounts per vat rate. */
   protected $discountAmounts;
 
@@ -26,41 +22,6 @@ abstract class Siel_Acumulus_Model_InvoiceAddBase {
 
   public function __construct() {
     $this->acumulusConfig = Mage::helper('acumulus')->getAcumulusConfig();
-    $this->webAPI = Mage::helper('acumulus')->getWebAPI();
-  }
-
-  /**
-   * Send an order to Acumulus.
-   *
-   * For now we don't check if the order is already sent to Acumulus (in which
-   * case we might just update the payment status), we just send it.
-   *
-   * @param Mage_Sales_Model_Order|Mage_Sales_Model_Order_Creditmemo $order
-   *   The order to send to Acumulus
-   *
-   * @return array
-   *   A keyed array with the following keys:
-   *   - errors
-   *   - warnings
-   *   - status
-   *   - invoice (optional)
-   *   If the key invoice is present, it indicates success.
-   *
-   * See https://apidoc.sielsystems.nl/content/warning-error-and-status-response-section-most-api-calls
-   * for more information on the contents of the returned array.
-   */
-  public function send($order) {
-    // Create the invoice array.
-    $invoice = $this->convertOrderToAcumulusInvoice($order);
-
-    // Send it.
-    $result = $this->webAPI->invoiceAdd($invoice, $order->getIncrementId());
-
-    if ($result['invoice']) {
-      // Attach token and invoice number to order: not yet implemented.
-    }
-
-    return $result;
   }
 
   /**
@@ -68,7 +29,7 @@ abstract class Siel_Acumulus_Model_InvoiceAddBase {
    *
    * @return array
    */
-  protected function convertOrderToAcumulusInvoice($order) {
+  public function convertOrderToAcumulusInvoice($order) {
     $this->discountTaxAmounts = array();
     $invoice = array();
     $invoice['customer'] = $this->addCustomer($order);

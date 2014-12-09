@@ -1,6 +1,7 @@
 <?php
 
 use Siel\Acumulus\Common\ConfigInterface;
+use Siel\Acumulus\Common\WebAPI;
 use Siel\Acumulus\Magento\MagentoAcumulusConfig;
 
 class Siel_Acumulus_Model_Order_Observer extends Mage_Core_Model_Abstract {
@@ -8,8 +9,12 @@ class Siel_Acumulus_Model_Order_Observer extends Mage_Core_Model_Abstract {
   /** @var MagentoAcumulusConfig */
   protected $acumulusConfig;
 
+  /** @var WebAPI */
+  protected $webAPI;
+
   public function __construct() {
     $this->acumulusConfig = Mage::helper('acumulus')->getAcumulusConfig();
+    $this->webAPI = Mage::helper('acumulus')->getWebAPI();
   }
 
   /**
@@ -20,14 +25,12 @@ class Siel_Acumulus_Model_Order_Observer extends Mage_Core_Model_Abstract {
    * @return bool
    */
   public function orderSaveAfter(Varien_Event_Observer $observer) {
-    $this->acumulusConfig = Mage::helper('acumulus')->getAcumulusConfig();
     if ($this->acumulusConfig->get('triggerOrderEvent') == ConfigInterface::TriggerOrderEvent_OrderStatus) {
       /** @var Varien_Event $event */
       $event = $observer->getEvent();
       /** @var Mage_Sales_Model_Order $order */
       $order = $event->getOrder();
       $currentStatus = $order->getStatus();
-      $this->acumulusConfig = Mage::helper('acumulus')->getAcumulusConfig();
       if ($this->acumulusConfig->get('triggerOrderStatus') == $currentStatus) {
         // getAllStatusHistory returns order history ordered by created_at desc,
         // but the current change is at the end!
@@ -58,7 +61,6 @@ class Siel_Acumulus_Model_Order_Observer extends Mage_Core_Model_Abstract {
    * @return bool
    */
   public function invoiceSaveAfter(Varien_Event_Observer $observer) {
-    $this->acumulusConfig = Mage::helper('acumulus')->getAcumulusConfig();
     if ($this->acumulusConfig->get('triggerOrderEvent') == ConfigInterface::TriggerOrderEvent_InvoiceCreate) {
       /** @var Varien_Event $event */
       $event = $observer->getEvent();
@@ -78,7 +80,13 @@ class Siel_Acumulus_Model_Order_Observer extends Mage_Core_Model_Abstract {
   public function sendInvoiceToAcumulus($order) {
     /** @var Siel_Acumulus_Model_InvoiceAdd $invoiceAdd */
     $invoiceAdd = Mage::getModel('acumulus/invoiceAdd');
-    $result = $invoiceAdd->send($order);
+
+    $invoice = $invoiceAdd->convertOrderToAcumulusInvoice($order);
+    $transportObject = new Varien_Object(array('invoice' => $invoice));
+    Mage::dispatchEvent('acumulus_invoice_add', array('transport_object' => $transportObject, 'order' => $order));
+    $invoice = $transportObject->getData('invoice');
+    $result = $this->webAPI->invoiceAdd($invoice, $order->getIncrementId());
+
     $this->processResults($result, $order, $order->getIncrementId());
     return !empty($result['invoice']['invoicenumber']);
   }
@@ -106,8 +114,14 @@ class Siel_Acumulus_Model_Order_Observer extends Mage_Core_Model_Abstract {
   public function sendCreditMemoToAcumulus(Mage_Sales_Model_Order_Creditmemo $creditMemo) {
     /** @var Siel_Acumulus_Model_CreditInvoiceAdd $invoiceAdd */
     $invoiceAdd = Mage::getModel('acumulus/creditInvoiceAdd');
-    $result = $invoiceAdd->send($creditMemo);
-    $this->processResults($result, $creditMemo, 'Credit memo ' . $creditMemo->getIncrementId());
+
+    $invoice = $invoiceAdd->convertOrderToAcumulusInvoice($creditMemo);
+    $transportObject = new Varien_Object(array('invoice' => $invoice));
+    Mage::dispatchEvent('acumulus_invoice_add', array('transport_object' => $transportObject, 'creditmemo' => $creditMemo));
+    $invoice = $transportObject->getData('invoice');
+    $result = $this->webAPI->invoiceAdd($invoice, $creditMemo->getIncrementId());
+
+    $this->processResults($result, $creditMemo, $creditMemo->getIncrementId());
     return !empty($result['invoice']['invoicenumber']);
   }
 
@@ -124,21 +138,19 @@ class Siel_Acumulus_Model_Order_Observer extends Mage_Core_Model_Abstract {
       $entry->saveEntry($result['invoice'], $order);
     }
 
-    /** @var \Siel\Acumulus\Common\WebAPI $webAPI */
-    $webAPI = Mage::helper('acumulus')->getWebAPI();
-    $messages = $webAPI->resultToMessages($result);
+    $messages = $this->webAPI->resultToMessages($result);
     if (!empty($messages)) {
       // Send email.
       $templateVars = array(
         '{order_id}' => $order_id,
         '{invoice_id}' => isset($result['invoice']['invoicenumber']) ? $result['invoice']['invoicenumber'] : $this->acumulusConfig->t('message_no_invoice'),
         '{status}' => $result['status'],
-        '{status_text}' => $webAPI->getStatusText($result['status']),
-        '{status_1_text}' => $webAPI->getStatusText(1),
-        '{status_2_text}' => $webAPI->getStatusText(2),
-        '{status_3_text}' => $webAPI->getStatusText(3),
-        '{messages}' => $webAPI->messagesToText($messages),
-        '{messages_html}' => $webAPI->messagesToHtml($messages),
+        '{status_text}' => $this->webAPI->getStatusText($result['status']),
+        '{status_1_text}' => $this->webAPI->getStatusText(1),
+        '{status_2_text}' => $this->webAPI->getStatusText(2),
+        '{status_3_text}' => $this->webAPI->getStatusText(3),
+        '{messages}' => $this->webAPI->messagesToText($messages),
+        '{messages_html}' => $this->webAPI->messagesToHtml($messages),
       );
       /** @var Mage_Core_Model_Email_Template $emailTemplate */
       $emailTemplate = Mage::getModel('core/email_template');
