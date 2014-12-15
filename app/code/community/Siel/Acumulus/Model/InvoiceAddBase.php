@@ -61,6 +61,12 @@ abstract class Siel_Acumulus_Model_InvoiceAddBase {
     $result = array();
 
     $invoiceAddress = $order->getBillingAddress();
+    if ($order->getCustomerId()) {
+      /** @var Mage_Customer_Model_Customer $customer */
+      $customer = Mage::getModel('customer/customer')->load($order->getCustomerId());
+      $result['contactyourid'] = $customer->getId();
+      $this->addIfNotEmpty($result, 'contactyourid', $customer->getIncrementId());
+    }
     $this->addEmpty($result, 'companyname1', $invoiceAddress->getCompany());
     $result['companyname2'] = '';
     $result['fullname'] = $invoiceAddress->getFirstname() . ' ' . $invoiceAddress->getLastname();
