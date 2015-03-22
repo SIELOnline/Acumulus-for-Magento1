@@ -77,7 +77,10 @@ abstract class Siel_Acumulus_Model_InvoiceAddBase {
     if ($invoiceAddress->getCountryId()) {
       $result['countrycode'] = $invoiceAddress->getCountry();
     }
+    // Magento has 2 VAT numbers:
+    // http://magento.stackexchange.com/questions/42164/there-are-2-vat-fields-in-onepage-checkout-which-one-should-i-be-using
     $this->addIfNotEmpty($result, 'vatnumber', $order->getCustomerTaxvat());
+    $this->addIfNotEmpty($result, 'vatnumber', $invoiceAddress->getVatId());
     $this->addIfNotEmpty($result, 'telephone', $invoiceAddress->getTelephone());
     $this->addIfNotEmpty($result, 'fax', $invoiceAddress->getFax());
     $result['email'] = $invoiceAddress->getEmail();
@@ -157,11 +160,33 @@ abstract class Siel_Acumulus_Model_InvoiceAddBase {
    * @return array
    */
   protected function addShippingLine($order, $maxVatRate) {
+    // What do the following methods return:
+    //   getShippingAmount():         shipping costs excl VAT excl any discount
+    //   getShippingInclTax():        shipping costs incl VAT excl any discount
+    //   getShippingTaxAmount():      VAT on shipping costs incl discount
+    //   getShippingDiscountAmount(): discount on shipping incl VAT
+
     // If we have free shipping we still want to give the line the "correct"
-    // vat rate (for tax reports in Acumulus).
-    $vatRate = $order->getShippingAmount() > 0 ? 100.0 * $order->getShippingTaxAmount() / $order->getShippingAmount() : $maxVatRate;
-    // For higher precision, we use the prices as entered by the admin.
-    $unitPrice = $this->productPricesIncludeTax() ? $order->getShippingInclTax() / (100 + $vatRate) * 100 : $order->getShippingAmount();
+    // vat rate (for tax reports in Acumulus), we use the max vat rate for that.
+    if ($order->getShippingAmount() > 0) {
+      // We have 2 ways of calculating the vat rate: as both can give rise to
+      // rounding errors, we use both and take the mean, hoping that they err on
+      // different sides. If not, the mean won't be worse than 1 of these 2.
+      // First one is based on tax amount and normal shipping costs corrected
+      // with any discount (as the tax amount is including any discount).
+      $vatRate1 = $order->getShippingTaxAmount() / ($order->getShippingInclTax() - $order->getShippingDiscountAmount() - $order->getShippingTaxAmount());
+      // Second one is based on normal shipping costs incl and excl VAT.
+      $vatRate2 = ($order->getShippingInclTax() - $order->getShippingAmount()) / $order->getShippingAmount();
+      $vatRate = ($vatRate1 + $vatRate2) / 2.0 * 100.0;
+    }
+    else {
+      // If we have free shipping we still want to give the line the "correct"
+      // vat rate (for tax reports in Acumulus), we use the max vat rate for that.
+      $vatRate = $maxVatRate;
+    }
+
+    // Include discount in the unit price.
+    $unitPrice = ($order->getShippingInclTax() - $order->getShippingDiscountAmount()) / (100 + $vatRate) * 100;
     $shippingDescription = $order->getShippingDescription();
     $result = array(
       'itemnumber' => '',
@@ -171,23 +196,9 @@ abstract class Siel_Acumulus_Model_InvoiceAddBase {
       'quantity' => 1,
     );
 
-    // Administer taxes on discount per tax rate.
-    if ($order->getShippingDiscountAmount() > 0.0) {
-      if (array_key_exists($vatRate, $this->discountTaxAmounts)) {
-        $this->discountAmounts[$vatRate] += $order->getShippingDiscountAmount();
-      }
-      else {
-        $this->discountAmounts[$vatRate] = $order->getShippingDiscountAmount();
-      }
-      $taxDifference = 0.01 * $vatRate * $order->getShippingAmount() - $order->getShippingTaxAmount();
-      if (array_key_exists($vatRate, $this->discountTaxAmounts)) {
-        $this->discountTaxAmounts[$vatRate] += $taxDifference;
-      }
-      else {
-        $this->discountTaxAmounts[$vatRate] = $taxDifference;
-      }
+    if ($order->getShippingDiscountAmount() > 0) {
+      $result['debug'] = $order->getShippingAmount() . ' ' . $order->getShippingInclTax() . ' ' . $order->getShippingTaxAmount() . ' ' . $order->getShippingDiscountAmount();
     }
-
     return $result;
   }
 

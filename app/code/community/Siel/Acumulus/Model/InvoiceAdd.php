@@ -69,24 +69,30 @@ class Siel_Acumulus_Model_InvoiceAdd extends Siel_Acumulus_Model_InvoiceAddBase 
   /**
    * Magento has many types of products:
    * Simple product:
-   * Appears once, with price and possibly with a parentId set, in both getAllItems() and getAllVisibleItems().
+   *  Appears once, with price and possibly with a parentId set, in both
+   *  getAllItems() and getAllVisibleItems().
    *
    * Grouped product (e.g. a couch, chair and table of the same series):
-   * A grouped product itself does not appear in the list of items, only its parts.
+   *  A grouped product itself does not appear in the list of items, only its
+   *  parts.
    *
    * Configurable product (e.g. size and color variations):
-   * Appears twice in getAllItems(), once with price not set and parentId set, once with price set and parentId not set.
-   * Appears only once (with price) in getAllVisibleItems().
+   *  Appears twice in getAllItems(), once with price not set and parentId set,
+   *  once with price set and parentId not set. Appears only once (with price)
+   *  in getAllVisibleItems().
    *
-   * Bundle product (e.g. a computer with a choice of cpu, harddisk, memory, extended warranty):
-   * The bundle appears with price; parts may appear with or without price but with parentId set, thus not in getAllVisibleItems().
-   * If the bundle contains various tax levels, getTaxPercent() will not be set,
-   * but instead the price and tax percent will be set on the child items.
+   * Bundle product (e.g. a computer with a choice of cpu, harddisk, memory,
+   * extended warranty):
+   *  The bundle appears with price; parts may appear with or without price but
+   *  with parentId set, thus not in getAllVisibleItems(). If the bundle
+   *  contains various tax levels, getTaxPercent() will not be set, but instead
+   *  the price and tax percent will be set on the child items.
    *
    * Virtual product (e.g. extended warranty):
-   * Is normally part of a bundle, otherwise it acts like a simple product
+   *  Is normally part of a bundle, otherwise it acts like a simple product
    *
-   * Downloadable product: ?
+   * Downloadable product:
+   *  ?
    *
    * @param Mage_Sales_Model_Order $order
    *

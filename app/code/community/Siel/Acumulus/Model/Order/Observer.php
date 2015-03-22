@@ -131,13 +131,6 @@ class Siel_Acumulus_Model_Order_Observer extends Mage_Core_Model_Abstract {
    * @param string $order_id
    */
   protected function processResults($result, $order, $order_id) {
-    if (!empty($result['invoice'])) {
-      /** @var Siel_Acumulus_Model_Entry $entry */
-      $entry = Mage::getModel('acumulus/entry');
-      $entry = $entry->getByOrder($order);
-      $entry->saveEntry($result['invoice'], $order);
-    }
-
     $messages = $this->webAPI->resultToMessages($result);
     if (!empty($messages)) {
       // Send email.
@@ -163,6 +156,14 @@ class Siel_Acumulus_Model_Order_Observer extends Mage_Core_Model_Abstract {
       $emailTemplate->send(!empty($credentials['emailonerror']) ? $credentials['emailonerror'] : Mage::getStoreConfig('trans_email/ident_general/email'),
         Mage::getStoreConfig('trans_email/ident_general/name'));
     }
+
+    if (!empty($result['invoice'])) {
+      /** @var Siel_Acumulus_Model_Entry $entry */
+      $entry = Mage::getModel('acumulus/entry');
+      $entry = $entry->getByOrder($order);
+      $entry->saveEntry($result['invoice'], $order);
+    }
+
   }
 
 }
