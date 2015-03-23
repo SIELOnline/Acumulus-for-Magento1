@@ -300,7 +300,10 @@ class Siel_Acumulus_Block_Adminhtml_Settings_Form extends Mage_Adminhtml_Block_W
     $fieldset = $form->addFieldset('versioninfo_fieldset', array('legend' => $this->t('versionInformationHeader')));
 
     $fieldset->addField('note3', 'note', array(
-      'text' => "Acumulus module {$env['moduleVersion']} (API: {$env['libraryVersion']}) voor {$env['shopName']} {$env['shopVersion']}.",
+      'text' => "Application: Acumulus module {$env['moduleVersion']} (API: {$env['libraryVersion']}) voor {$env['shopName']} {$env['shopVersion']}.",
+    ));
+    $fieldset->addField('note4', 'note', array(
+      'text' => "Environment: PHP {$env['phpVersion']}; Curl: {$env['curlVersion']}; JSON: {$env['jsonVersion']}; OS: {$env['os']}.",
       'after_element_html' => $this->getNote('desc_versionInformation'),
     ));
 
