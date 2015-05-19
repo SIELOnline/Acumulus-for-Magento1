@@ -1,6 +1,6 @@
 <?php
 
-class Siel_Acumulus_Block_Adminhtml_Manual extends Mage_Adminhtml_Block_Widget_Form_Container {
+class Siel_Acumulus_Block_Adminhtml_Batch extends Mage_Adminhtml_Block_Widget_Form_Container {
   public function __construct() {
     parent::__construct();
 
@@ -15,7 +15,7 @@ class Siel_Acumulus_Block_Adminhtml_Manual extends Mage_Adminhtml_Block_Widget_F
     // Don't let the parent create the block.
     $old = $this->_mode;
     $this->_mode = '';
-    $this->setChild('form', $this->getLayout()->createBlock('acumulus/adminhtml_manual_form'));
+    $this->setChild('form', $this->getLayout()->createBlock('acumulus/adminhtml_batch_form'));
     $result = parent::_prepareLayout();
     $this->_mode = $old;
     return $result;
@@ -26,6 +26,6 @@ class Siel_Acumulus_Block_Adminhtml_Manual extends Mage_Adminhtml_Block_Widget_F
   }
 
   public function getHeaderText() {
-    return $this->t('page_title_manual');
+    return $this->t('batch_form_header');
   }
 }

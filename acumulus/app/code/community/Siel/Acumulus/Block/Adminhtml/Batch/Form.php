@@ -1,8 +1,8 @@
 <?php
 
-use Siel\Acumulus\Common\ConfigInterface;
+use Siel\Acumulus\Shop\ConfigInterface;
 
-class Siel_Acumulus_Block_Adminhtml_Manual_Form extends Mage_Adminhtml_Block_Widget_Form {
+class Siel_Acumulus_Block_Adminhtml_Batch_Form extends Mage_Adminhtml_Block_Widget_Form {
 
   private function t($key) {
     return Mage::helper('acumulus')->t($key);

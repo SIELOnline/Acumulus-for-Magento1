@@ -1,96 +1,92 @@
 <?php
-use Siel\Acumulus\Common\WebAPI;
-use Siel\Acumulus\Magento\MagentoAcumulusConfig;
+use Siel\Acumulus\Helpers\Translator;
+use Siel\Acumulus\Shop\Config;
+use Siel\Acumulus\Shop\Magento\BatchForm;
+use Siel\Acumulus\Shop\Magento\ConfigForm;
+use Siel\Acumulus\Shop\Magento\ConfigStore;
+use Siel\Acumulus\Shop\Magento\InvoiceManager;
+use Siel\Acumulus\Shop\Magento\Log;
 
 class Siel_Acumulus_Helper_Data extends Mage_Core_Helper_Abstract {
+
   /** @var bool */
-  private $initialized = FALSE;
+  protected $initialized = FALSE;
 
-  /** @var \Siel\Acumulus\Magento\MagentoAcumulusConfig */
-  private $acumulusConfig;
+  /** @var \Siel\Acumulus\Helpers\Translator */
+  protected $translator;
 
-  /** @var array|string */
-  private $connectionTestResult = NULL;
+  /** @var \Siel\Acumulus\Shop\Config */
+  protected $acumulusConfig;
 
-  /** @var string */
-  private $connectionTestDetail = '';
+  /** @var \Siel\Acumulus\Helpers\Form[]  */
+  protected $form;
 
   /**
-   * @return string
+   * Helper method that initializes our environment:
+   * - autoloader for the library part.
+   * - translator
+   * - acumulusConfig
    */
-  public function getConnectionTestDetail() {
-    return $this->connectionTestDetail;
+  protected function init() {
+    if (!$this->initialized) {
+      // Our library structure is incompatible with autoload in Magento: we
+      // register our own auto loader.
+      $acumulusDir = dirname(dirname(__FILE__)) . '/';
+      require_once($acumulusDir . 'libraries/Siel/psr4.php');
+
+      $languageCode = Mage::app()->getLocale()->getLocaleCode();
+      $this->translator = new Translator($languageCode);
+      $this->acumulusConfig = new Config(new ConfigStore(), $this->translator);
+      Log::createInstance($this->acumulusConfig->getLogLevel());
+
+      $this->initialized = TRUE;
+    }
   }
 
+  /**
+   * Helper method to translate strings.
+   *
+   * @param string $key
+   *  The key to get a translation for.
+   *
+   * @return string
+   *   The translation for the given key or the key itself if no translation
+   *   could be found.
+   */
   public function t($key) {
-    $this->init();
-    return $this->acumulusConfig->t($key);
+    return $this->translator->get($key);
   }
 
+  /**
+   * Returns the configuration settings object central to this extension.
+   *
+   * @return \Siel\Acumulus\Shop\Config
+   *   The Acumulus config.
+   */
   public function getAcumulusConfig() {
     $this->init();
     return $this->acumulusConfig;
   }
 
-  public function getWebAPI() {
-    $this->init();
-    return new WebAPI($this->acumulusConfig);
-  }
-
   /**
-   * Check if we can retrieve a picklist. This indicates if the account
-   * settings are known and correct.
+   * @param string $formType
    *
-   * The picklist will be returned for possible later use.
-   *
-   * @return array|string
-   *   On success the contact types picklist (array), otherwise a user readable
-   *   message indicating that the account settings were incorrect or that no
-   *   connection could be made.
+   * @return \Siel\Acumulus\Helpers\Form
    */
-  public function checkAccountSettings() {
-    // Check if we can retrieve a picklist. This indicates if the account
-    // settings are known and correct.
-    if ($this->connectionTestResult === NULL) {
-      $this->connectionTestResult = $this->getWebAPI()->getPicklistContactTypes();
-      if (!empty($this->connectionTestResult['errors'])) {
-        if ($this->connectionTestResult['errors'][0]['code'] == 401) {
-          $this->connectionTestResult = $this->t('message_error_auth');
-        }
-        else {
-          $this->connectionTestDetail = $this->getWebAPI()->resultToMessages($this->connectionTestResult);
-          $this->connectionTestDetail = $this->getWebAPI()->messagesToHtml($this->connectionTestDetail);
-          $this->connectionTestResult = $this->t('message_error_comm');
-        }
+  public function getForm($formType) {
+    // Get the form.
+    if (!isset($this->form[$formType])) {
+      switch ($formType) {
+        case 'batch':
+          $invoiceManager = new InvoiceManager($this->acumulusConfig, $this->translator);
+          $this->form[$formType] = new BatchForm($this->acumulusConfig, $this->translator, $invoiceManager);
+          break;
+        case 'config':
+          $this->form[$formType] = new ConfigForm($this->acumulusConfig, $this->translator);
+          break;
       }
     }
-    return $this->connectionTestResult;
+    return $this->form[$formType];
   }
 
-
-  /**
-   * Helper method that initializes some object properties:
-   * - language
-   * - model_Setting_Setting
-   * - webAPI
-   * - acumulusConfig
-   */
-  private function init() {
-    if (!$this->initialized) {
-      // Our lib structure is incompatible with autoload in Magento: load manually.
-      $acumulusDir = dirname(dirname(__FILE__)) . '/';
-      require_once($acumulusDir . 'Common/TranslatorInterface.php');
-      require_once($acumulusDir . 'Common/BaseTranslator.php');
-      require_once($acumulusDir . 'Common/ConfigInterface.php');
-      require_once($acumulusDir . 'Common/BaseConfig.php');
-      require_once($acumulusDir . 'Common/WebAPICommunication.php');
-      require_once($acumulusDir . 'Common/WebAPI.php');
-      require_once($acumulusDir . 'Model/MagentoAcumulusConfig.php');
-
-      // Load the Acumulus settings and WebAPI objects.
-      $this->acumulusConfig = new MagentoAcumulusConfig(Mage::app()->getLocale()->getLocaleCode());
-
-      $this->initialized = TRUE;
-    }
-  }
 }

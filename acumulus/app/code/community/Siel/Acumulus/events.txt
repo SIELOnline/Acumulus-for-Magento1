@@ -1,28 +1,38 @@
 Acumulus module events
 =======================
 
-This file documents the events that the Acumulus module defines. Currently only
-1 event is defined:
+This file documents the events that the Acumulus module defines. Currently, 2
+events are defined: acumulus_invoice_created and acumulus_invoice_completed.
+
+The event acumulus_invoice_created is triggered when the invoice has been
+created with raw data from the webshop order or credit memo, but  has yet to be
+completed and refined. Use this event when you want to do some completion
+yourself. This should be rare and most of the times the 2nd event should be
+preferred.
+
+The event acumulus_invoice_completed is triggered when the invoice has been
+completed. Some defaults have been added; VAT rates have been corrected for
+rounding errors; and the 'vat type' has been determined.
+
+Typical usages for the latter event allow to implement business logic specific
+to your business, think of:
+- Template, account number, or cost center selection based on order specifics.
+- Adding descriptive info to the invoice or invoice lines based on custom order
+  meta data.
+- Correcting payment info based on payment modules not supported by this module.
 
 
-acumulus_invoice_add
---------------------
+acumulus_invoice_created
+------------------------
 
 Warning
 -------
 This event is experimental. Depending on feedback from actual usage, details
 may change in future versions.
 
-Description
------------
-The "acumulus_invoice_add" event is used to change the invoice that will be
-sent to Acumulus. The Acumulus module has created the invoice and is about to
-send it to Acumulus. But just before doing so, this event allows you to change
-details of the invoice as will be sent to Acumulus.
-
 Usage
 -----
-When the "acumulus_invoice_add" event is called, it is passed 2 arguments:
+When the "acumulus_invoice_created" event is called, it is passed 2 arguments:
 - invoice:
   [Note: To allow an observer to change the invoice it is packed in a
    transportObject, see the example below to see how to get and change the
@@ -34,7 +44,7 @@ When the "acumulus_invoice_add" event is called, it is passed 2 arguments:
   represented as a numeric array of lines, even if if there is only 1 line.
 
   Some keys will be missing, if they are still missing after this event has
-  been applied, they will be filled in (not overwritten) by the module before
+  been applied, they will be filled in (not overwritten) by the Completor before
   the actual sending takes place:
   - ['customer']['locationcode']
   - ['customer']['overwriteifexists']
@@ -49,20 +59,36 @@ When the "acumulus_invoice_add" event is called, it is passed 2 arguments:
   'line' = 0. These null values will be replaced by the module by the most
   occurring vat rate before the actual sending takes place:
   - ['customer']['invoice']['line']['taxrate']
-And one of:
-- order: The Magento order, a Mage_Sales_Model_Order class object.
-- creditmemo: a Magento credit memo, a Mage_Sales_Model_Order_Creditmemo class
-  object.
+- source: The Acumulus \Siel\Acumulus\Invoice\Source object that is the base of
+  the invoice to be sent.
 
-Typical usages for this event allow to implement business logic specific to
-your business, think of:
-- Template, account number, or cost center selection based on order specifics.
-- Adding descriptive info to the invoice or invoice lines based on custom order
-  meta data.
-- Correcting payment info based on payment modules not supported by this module.
 
-Examples
---------
+acumulus_invoice_completed
+--------------------------
+
+Warning
+-------
+This event is experimental. Depending on feedback from actual usage, details
+may change in future versions.
+
+Usage
+-----
+When the "acumulus_invoice_completed" event is called, it is passed 2 arguments:
+- invoice:
+  [Note: To allow an observer to change the invoice it is packed in a
+   transportObject, see the example below to see how to get and change the
+   invoice.]
+  A keyed array containing the invoice that will be sent to Acumulus. The array
+  structure is similar to the XML structure as defined on
+  https://apidoc.sielsystems.nl/content/invoice-add, though at this stage, only
+  the customer key will be present at the highest level. The line tag is
+  represented as a numeric array of lines, even if if there is only 1 line.
+- source: The Acumulus \Siel\Acumulus\Invoice\Source object that is the base of
+  the invoice to be sent.
+
+
+Example
+-------
 config.xml:
 <?xml version="1.0"?>
 <config>
@@ -80,7 +106,7 @@ config.xml:
           <My_Module_acumulus_observer>
             <type>singleton</type>
             <class>module/acumulus_observer</class>
-            <method>acumulusInvoiceAdd</method>
+            <method>acumulusInvoiceCompleted</method>
           </My_Module_acumulus_observer>
         </observers>
       </acumulus_invoice_add>
@@ -91,20 +117,25 @@ config.xml:
 </config>
 
 app\code\local\My\Module\Model\Acumulus\Observer.php:
+use Siel\Acumulus\Invoice\Source;
+
 class My_Module_Model_Acumulus_Observer extends Mage_Core_Model_Abstract {
 
-  public function acumulusInvoiceAdd(Varien_Event_Observer $observer) {
+  public function acumulusInvoiceCompleted(Varien_Event_Observer $observer) {
     $invoice = $observer->getTransportObject()->getInvoice();
-    $order = $observer->getOrder();
-    if (!empty($order)) {
+    /** @var \Siel\Acumulus\Invoice\Source $source */
+    $source = $observer->getSource();
+    if ($source->getType() === Source::Order) {
       // Process order.
+      $order = $source->getSource();
       $invoice['test'] = 'order test';
     }
-    else {
-      $creditmemo = $observer->getCreditmemo();
+    else { // $source->getType() === Source::CreditNote
       // Process credit memo.
+      $creditmemo = $source->getSource();
       $invoice['test'] = 'creditmemo test';
     }
+
     // Make sure that the changes on the invoice are returned.
     $observer->getTransportObject()->setInvoice($invoice);
   }

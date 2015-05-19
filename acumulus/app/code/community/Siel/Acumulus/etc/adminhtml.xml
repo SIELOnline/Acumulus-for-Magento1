@@ -5,16 +5,16 @@
       <title>Acumulus</title>
       <sort_order>85</sort_order>
       <children>
-        <acumulus_settings_form translate="title" module="acumulus">
-          <title>Instellingen</title>
-          <action>adminhtml/acumulus/settings</action>
+        <acumulus_config_form translate="title" module="acumulus">
+          <title>Acumulus instellingen</title>
+          <action>adminhtml/acumulus/config</action>
           <sort_order>5</sort_order>
-        </acumulus_settings_form>
-        <acumulus_manual_form translate="title" module="acumulus">
-          <title>Handmatig versturen</title>
-          <action>adminhtml/acumulus/manual</action>
+        </acumulus_config_form>
+        <acumulus_batch_form translate="title" module="acumulus">
+          <title>Verzend facturen naar Acumulus</title>
+          <action>adminhtml/acumulus/batch</action>
           <sort_order>10</sort_order>
-        </acumulus_manual_form>
+        </acumulus_batch_form>
       </children>
     </acumulus>
   </menu>
@@ -25,12 +25,12 @@
         <children>
           <acumulus>
             <children>
-              <acumulus_settings_form>
-                <title>Acumulus settings form</title>
-              </acumulus_settings_form>
-              <acumulus_manual_form>
-                <title>Acumulus send manual form</title>
-              </acumulus_manual_form>
+              <acumulus_config_form>
+                <title>Acumulus instellingen</title>
+              </acumulus_config_form>
+              <acumulus_batch_form>
+                <title>Verzend facturen naar Acumulus</title>
+              </acumulus_batch_form>
             </children>
           </acumulus>
         </children>

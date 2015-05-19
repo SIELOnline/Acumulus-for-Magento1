@@ -2,7 +2,7 @@
 
 use Siel\Acumulus\Shop\Magento\FormMapper;
 
-class Siel_Acumulus_Block_Adminhtml_Settings_Form extends Siel_Acumulus_Block_Adminhtml_Form {
+class Siel_Acumulus_Block_Adminhtml_Form_Form extends Mage_Adminhtml_Block_Widget_Form {
 
   /** @var bool */
   protected $initialized = FALSE;
@@ -10,18 +10,17 @@ class Siel_Acumulus_Block_Adminhtml_Settings_Form extends Siel_Acumulus_Block_Ad
   /** @var Siel_Acumulus_Helper_Data */
   protected $helper;
 
+  /** @var string */
+  protected $formType;
+
   /**
-   * Helper method to translate strings.
+   * Siel_Acumulus_Block_Adminhtml_Form constructor.
    *
-   * @param string $key
-   *  The key to get a translation for.
-   *
-   * @return string
-   *   The translation for the given key or the key itself if no translation
-   *   could be found.
+   * @param array $attributes
    */
-  protected function t($key) {
-    return $this->helper->t($key);
+  public function __construct(array $attributes = array()) {
+    $this->formType = $attributes['formType'];
+    parent::__construct($attributes);
   }
 
   /**
@@ -31,7 +30,7 @@ class Siel_Acumulus_Block_Adminhtml_Settings_Form extends Siel_Acumulus_Block_Ad
    * - webAPI
    * - acumulusConfig
    */
-  private function init() {
+  protected function init() {
     if (!$this->initialized) {
       $this->helper = Mage::helper('acumulus');
       $this->initialized = TRUE;
@@ -41,12 +40,12 @@ class Siel_Acumulus_Block_Adminhtml_Settings_Form extends Siel_Acumulus_Block_Ad
   protected function _prepareForm() {
     $this->init();
 
-    $acumulusForm = $this->helper->getForm('config');
+    $acumulusForm = $this->helper->getForm($this->formType);
     $mapper = new FormMapper();
     $form = $mapper->map($acumulusForm->getFields());
     $form->setValues($acumulusForm->getFormValues());
 
-    $form->setAction($this->getUrl('*/*/settings'));
+    $form->setAction($this->getUrl("*/*/{$this->formType}"));
     $form->setMethod('post');
     $form->setUseContainer(true);
     $form->setId('edit_form');
