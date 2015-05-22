@@ -22,6 +22,14 @@ class Siel_Acumulus_Helper_Data extends Mage_Core_Helper_Abstract {
   protected $form;
 
   /**
+   * Siel_Acumulus_Helper_Data constructor.
+   */
+  public function __construct() {
+    $this->init();
+  }
+
+
+  /**
    * Helper method that initializes our environment:
    * - autoloader for the library part.
    * - translator

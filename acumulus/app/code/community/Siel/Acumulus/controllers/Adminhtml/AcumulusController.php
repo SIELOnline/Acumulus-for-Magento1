@@ -42,16 +42,18 @@ class Siel_Acumulus_Adminhtml_AcumulusController extends Mage_Adminhtml_Controll
   }
 
   public function formAction($formType) {
-    $title = $this->t("{$formType}_form_title");
     $activeMenu = "acumulus/acumulus_{$formType}_form";
     $block = "siel_acumulus_block_adminhtml_form";
-
-    $this->_title($this->__('System'))->_title($title);
+    $titleKey = "{$formType}_form_title";
 
     /** @var Mage_Adminhtml_Model_Session $session */
     $session = Mage::getSingleton('adminhtml/session');
     try {
+      // Create the form first: this will load the translations.
       $form = $this->helper->getForm($formType);
+
+      $this->_title($this->__('System'))->_title($this->t($titleKey));
+
       $form->process();
       foreach($form->getSuccessMessages() as $message) {
         $session->addSuccess($message);
@@ -69,7 +71,7 @@ class Siel_Acumulus_Adminhtml_AcumulusController extends Mage_Adminhtml_Controll
     $this->renderLayout();
   }
 
-  public function settingsAction() {
+  public function configAction() {
     $this->formAction('config');
   }
 

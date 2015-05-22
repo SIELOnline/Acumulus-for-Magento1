@@ -41,10 +41,11 @@ class Siel_Acumulus_Block_Adminhtml_Form_Form extends Mage_Adminhtml_Block_Widge
     $this->init();
 
     $acumulusForm = $this->helper->getForm($this->formType);
+    $form = new Varien_Data_Form();
     $mapper = new FormMapper();
-    $form = $mapper->map($acumulusForm->getFields());
-    $form->setValues($acumulusForm->getFormValues());
+    $mapper->map($form, $acumulusForm->getFields());
 
+    $form->setValues($acumulusForm->getFormValues());
     $form->setAction($this->getUrl("*/*/{$this->formType}"));
     $form->setMethod('post');
     $form->setUseContainer(true);

@@ -23,6 +23,9 @@ class Siel_Acumulus_Block_Adminhtml_Form extends Mage_Adminhtml_Block_Widget_For
     $this->_controller = 'adminhtml_form';
     $this->_removeButton('delete');
     $this->_removeButton('back');
+    if ($this->formType === 'batch') {
+      $this->_updateButton('save', 'label', $this->t('button_send'));
+    }
   }
 
   /**
@@ -44,13 +47,13 @@ class Siel_Acumulus_Block_Adminhtml_Form extends Mage_Adminhtml_Block_Widget_For
     // Don't let the parent create the block.
     $old = $this->_mode;
     $this->_mode = '';
-    $this->setChild('form', $this->getLayout()->createBlock('acumulus/adminhtml_form_form', array('formType' => $this->formType)));
+    $this->setChild('form', $this->getLayout()->createBlock('acumulus/adminhtml_form_form', '', array('formType' => $this->formType)));
     $result = parent::_prepareLayout();
     $this->_mode = $old;
     return $result;
   }
 
   public function getHeaderText() {
-    return $this->t('page_title');
+    return $this->t("{$this->formType}_form_header");
   }
 }
