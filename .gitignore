@@ -4,6 +4,9 @@ interdiff.txt
 *.orig
 *.bak
 
+# releases
+*.zip
+
 # PHPStorm
 .idea/*
 
