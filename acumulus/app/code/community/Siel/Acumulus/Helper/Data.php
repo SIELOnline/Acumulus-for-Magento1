@@ -39,8 +39,11 @@ class Siel_Acumulus_Helper_Data extends Mage_Core_Helper_Abstract {
     if (!$this->initialized) {
       // Our library structure is incompatible with autoload in Magento: we
       // register our own auto loader.
-      $acumulusDir = dirname(dirname(__FILE__)) . '/';
-      require_once($acumulusDir . 'libraries/Siel/psr4.php');
+      $acumulusDir = dirname(dirname(__FILE__));
+      if (!@include_once($acumulusDir . '/libraries/Siel/psr4.php')) {
+        // Magento has been "compiled", use a more specific autoloader.
+        require_once(dirname(__FILE__) . '/Siel_Acumulus_Helper_CompiledMagentoAutoLoader.php');
+      }
 
       $languageCode = Mage::app()->getLocale()->getLocaleCode();
       $this->translator = new Translator($languageCode);
