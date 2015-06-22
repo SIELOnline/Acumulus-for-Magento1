@@ -1,14 +1,23 @@
 Acumulus module events
 =======================
 
-This file documents the events that the Acumulus module defines. Currently, 2
-events are defined: acumulus_invoice_created and acumulus_invoice_completed.
+Warning
+-------
+The events are experimental. Depending on feedback from actual usage, details
+may change in future versions!
+
+
+Introduction
+------------
+This file documents the events that the Acumulus module defines. Currently, 3
+events are defined: acumulus_invoice_created, acumulus_invoice_completed and
+acumulus_invoice_sent.
 
 The event acumulus_invoice_created is triggered when the invoice has been
 created with raw data from the webshop order or credit memo, but  has yet to be
 completed and refined. Use this event when you want to do some completion
-yourself. This should be rare and most of the times the 2nd event should be
-preferred.
+yourself. This should be rare and most of the times the
+acumulus_invoice_completed event should be preferred.
 
 The event acumulus_invoice_completed is triggered when the invoice has been
 completed. Some defaults have been added; VAT rates have been corrected for
@@ -21,14 +30,18 @@ to your business, think of:
   meta data.
 - Correcting payment info based on payment modules not supported by this module.
 
+The event acumulus_invoice_sent is triggered when the invoice has been sent to
+Acumulus. This allows to perform some actions depending on the result. Note that
+this event is called independent of the result, so on success as well as
+failure.
+
+Typical usages for this event allow to use the invoice number assigned by
+Acumulus in your webshop or to link your order to Acumulus info, although
+this is also already done by this module itself.
+
 
 acumulus_invoice_created
 ------------------------
-
-Warning
--------
-This event is experimental. Depending on feedback from actual usage, details
-may change in future versions.
 
 Usage
 -----
@@ -66,11 +79,6 @@ When the "acumulus_invoice_created" event is called, it is passed 2 arguments:
 acumulus_invoice_completed
 --------------------------
 
-Warning
--------
-This event is experimental. Depending on feedback from actual usage, details
-may change in future versions.
-
 Usage
 -----
 When the "acumulus_invoice_completed" event is called, it is passed 2 arguments:
@@ -101,7 +109,7 @@ config.xml:
   <global>
     ...
     <events>
-      <acumulus_invoice_add>
+      <acumulus_invoice_completed>
         <observers>
           <My_Module_acumulus_observer>
             <type>singleton</type>
@@ -109,7 +117,7 @@ config.xml:
             <method>acumulusInvoiceCompleted</method>
           </My_Module_acumulus_observer>
         </observers>
-      </acumulus_invoice_add>
+      </acumulus_invoice_completed>
     </events>
     ...
   </global>
@@ -138,6 +146,79 @@ class My_Module_Model_Acumulus_Observer extends Mage_Core_Model_Abstract {
 
     // Make sure that the changes on the invoice are returned.
     $observer->getTransportObject()->setInvoice($invoice);
+  }
+}
+
+
+
+acumulus_invoice_sent
+---------------------
+
+Usage
+-----
+When the "acumulus_invoice_sent" event is called, it is passed 2 arguments:
+- invoice:
+  A keyed array containing the invoice that will be sent to Acumulus. The array
+  structure is similar to the XML structure as defined on
+  https://apidoc.sielsystems.nl/content/invoice-add, though at this stage, only
+  the customer key will be present at the highest level. The line tag is
+  represented as a numeric array of lines, even if if there is only 1 line.
+- source: The Acumulus \Siel\Acumulus\Invoice\Source object that is the base of
+  the invoice to be sent.
+- result: An array that contains the information as sent back by Acumulus, see
+  https://apidoc.sielsystems.nl/content/invoice-add.
+
+
+Example
+-------
+config.xml:
+<?xml version="1.0"?>
+<config>
+  <modules>
+    <My_Module>
+      <version>0.1-beta1</version>
+    </My_Module>
+  </modules>
+  ...
+  <global>
+    ...
+    <events>
+      <acumulus_invoice_sent>
+        <observers>
+          <My_Module_acumulus_observer>
+            <type>singleton</type>
+            <class>module/acumulus_observer</class>
+            <method>acumulusInvoiceSent</method>
+          </My_Module_acumulus_observer>
+        </observers>
+      </acumulus_invoice_sent>
+    </events>
+    ...
+  </global>
+  ...
+</config>
+
+app\code\local\My\Module\Model\Acumulus\Observer.php:
+use Siel\Acumulus\Invoice\Source;
+
+class My_Module_Model_Acumulus_Observer extends Mage_Core_Model_Abstract {
+
+  public function acumulusInvoiceSent(Varien_Event_Observer $observer) {
+    /** @var array $invoice */
+    $invoice = $observer->getInvoice();
+    /** @var \Siel\Acumulus\Invoice\Source $source */
+    $source = $observer->getSource();
+    /** @var array $result */
+    $result = $observer->getResult();
+    if (!empty($result['invoice']['invoicenumber']) {
+      // Success.
+      $acumulusInvoiceNumber = $result['invoice']['invoicenumber'];
+      $acumulusEntryId = $result['invoice']['entryid'];
+      $acumulusToken = $result['invoice']['token'];
+    }
+    else {
+      // Failure.
+    }
   }
 }
 
