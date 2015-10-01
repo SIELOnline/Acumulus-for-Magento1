@@ -10,8 +10,10 @@ may change in future versions!
 Introduction
 ------------
 This file documents the events that the Acumulus module defines. Currently, 3
-events are defined: acumulus_invoice_created, acumulus_invoice_completed and
-acumulus_invoice_sent.
+events are defined:
+- acumulus_invoice_created
+- acumulus_invoice_completed
+- acumulus_invoice_sent
 
 The event acumulus_invoice_created is triggered when the invoice has been
 created with raw data from the webshop order or credit memo, but  has yet to be

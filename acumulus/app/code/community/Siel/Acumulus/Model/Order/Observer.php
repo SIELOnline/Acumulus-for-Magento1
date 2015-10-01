@@ -1,6 +1,6 @@
 <?php
 
-use Siel\Acumulus\Shop\Magento\Source;
+use Siel\Acumulus\Magento\Invoice\Source;
 use Siel\Acumulus\Web\ConfigInterface as WebConfigInterface;
 
 class Siel_Acumulus_Model_Order_Observer extends Mage_Core_Model_Abstract {
@@ -24,6 +24,7 @@ class Siel_Acumulus_Model_Order_Observer extends Mage_Core_Model_Abstract {
     /** @var Varien_Event $event */
     $event = $observer->getEvent();
     /** @var Mage_Sales_Model_Order $order */
+    /** @noinspection PhpUndefinedMethodInspection */
     $order = $event->getOrder();
     $source = new Source(Source::Order, $order);
     $newStatus = $order->getStatus();
@@ -41,6 +42,7 @@ class Siel_Acumulus_Model_Order_Observer extends Mage_Core_Model_Abstract {
     /** @var Varien_Event $event */
     $event = $observer->getEvent();
     /** @var Mage_Sales_Model_Order_Creditmemo $creditMemo */
+    /** @noinspection PhpUndefinedMethodInspection */
     $creditMemo = $event->getCreditmemo();
     $source = new Source(Source::CreditNote, $creditMemo);
     return $this->helper->getAcumulusConfig()->getManager()->sourceStatusChange($source) !== WebConfigInterface::Status_Exception;
@@ -57,6 +59,7 @@ class Siel_Acumulus_Model_Order_Observer extends Mage_Core_Model_Abstract {
     /** @var Varien_Event $event */
     $event = $observer->getEvent();
     /** @var Mage_Sales_Model_Order_Invoice $invoice */
+    /** @noinspection PhpUndefinedMethodInspection */
     $invoice = $event->getInvoice();
     $order = $invoice->getOrder();
     $source = new Source(Source::Order, $order);

@@ -1,11 +1,11 @@
 <?php
 use Siel\Acumulus\Helpers\Translator;
 use Siel\Acumulus\Shop\Config;
-use Siel\Acumulus\Shop\Magento\BatchForm;
-use Siel\Acumulus\Shop\Magento\ConfigForm;
-use Siel\Acumulus\Shop\Magento\ConfigStore;
-use Siel\Acumulus\Shop\Magento\InvoiceManager;
-use Siel\Acumulus\Shop\Magento\Log;
+use Siel\Acumulus\Magento\Shop\BatchForm;
+use Siel\Acumulus\Magento\Shop\ConfigForm;
+use Siel\Acumulus\Magento\Shop\ConfigStore;
+use Siel\Acumulus\Magento\Shop\InvoiceManager;
+use Siel\Acumulus\Magento\Helpers\Log;
 
 class Siel_Acumulus_Helper_Data extends Mage_Core_Helper_Abstract {
 
@@ -42,13 +42,13 @@ class Siel_Acumulus_Helper_Data extends Mage_Core_Helper_Abstract {
       $acumulusDir = dirname(dirname(__FILE__));
       if (!@include_once($acumulusDir . '/libraries/Siel/psr4.php')) {
         // Magento has been "compiled", use a more specific autoloader.
-        require_once(dirname(__FILE__) . '/Siel_Acumulus_Helper_CompiledMagentoAutoLoader.php');
+        require_once(dirname(__FILE__) . '/CompiledMagentoAutoLoader.php');
       }
 
+      Log::createInstance();
       $languageCode = Mage::app()->getLocale()->getLocaleCode();
       $this->translator = new Translator($languageCode);
       $this->acumulusConfig = new Config(new ConfigStore(), $this->translator);
-      Log::createInstance($this->acumulusConfig->getLogLevel());
 
       $this->initialized = TRUE;
     }
@@ -90,10 +90,10 @@ class Siel_Acumulus_Helper_Data extends Mage_Core_Helper_Abstract {
       switch ($formType) {
         case 'batch':
           $invoiceManager = new InvoiceManager($this->acumulusConfig, $this->translator);
-          $this->form[$formType] = new BatchForm($this->acumulusConfig, $this->translator, $invoiceManager);
+          $this->form[$formType] = new BatchForm($this->translator, $invoiceManager);
           break;
         case 'config':
-          $this->form[$formType] = new ConfigForm($this->acumulusConfig, $this->translator);
+          $this->form[$formType] = new ConfigForm($this->translator, $this->acumulusConfig);
           break;
       }
     }

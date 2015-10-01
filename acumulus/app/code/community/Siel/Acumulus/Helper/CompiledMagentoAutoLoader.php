@@ -10,6 +10,7 @@ namespace Siel;
 spl_autoload_register(function($class) {
     if (strpos($class, __NAMESPACE__ . '\\') === 0) {
       $fileName = __DIR__ . DIRECTORY_SEPARATOR . 'Siel_Acumulus_libraries_' . str_replace('\\', '_', $class) . '.php';
-      $result = include($fileName);
+      /** @noinspection PhpIncludeInspection */
+      include($fileName);
     }
   }, FALSE, TRUE);

@@ -1,4 +1,4 @@
-<?php
+<?php /** @noinspection PhpLanguageLevelInspection */
 
 /**
  * Class Siel_Acumulus_Model_Entry Acumulus is used by
