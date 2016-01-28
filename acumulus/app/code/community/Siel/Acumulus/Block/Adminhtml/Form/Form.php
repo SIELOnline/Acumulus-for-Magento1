@@ -4,11 +4,8 @@ use Siel\Acumulus\Magento\Helpers\FormMapper;
 
 class Siel_Acumulus_Block_Adminhtml_Form_Form extends Mage_Adminhtml_Block_Widget_Form {
 
-  /** @var bool */
-  protected $initialized = FALSE;
-
   /** @var Siel_Acumulus_Helper_Data */
-  protected $helper;
+  protected $helper = NULL;
 
   /** @var string */
   protected $formType;
@@ -19,28 +16,13 @@ class Siel_Acumulus_Block_Adminhtml_Form_Form extends Mage_Adminhtml_Block_Widge
    * @param array $attributes
    */
   public function __construct(array $attributes = array()) {
+    $this->helper = Mage::helper('acumulus');
     $this->formType = $attributes['formType'];
     parent::__construct($attributes);
   }
 
-  /**
-   * Helper method that initializes some object properties:
-   * - language
-   * - model_Setting_Setting
-   * - webAPI
-   * - acumulusConfig
-   */
-  protected function init() {
-    if (!$this->initialized) {
-      $this->helper = Mage::helper('acumulus');
-      $this->initialized = TRUE;
-    }
-  }
-
   protected function _prepareForm() {
-    $this->init();
-
-    $acumulusForm = $this->helper->getForm($this->formType);
+    $acumulusForm = $this->helper-> getAcumulusConfig()->getForm($this->formType);
     $form = new Varien_Data_Form();
     $mapper = new FormMapper();
     $mapper->map($form, $acumulusForm->getFields());

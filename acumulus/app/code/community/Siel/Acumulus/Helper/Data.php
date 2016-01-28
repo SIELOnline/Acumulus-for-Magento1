@@ -1,25 +1,10 @@
 <?php
-use Siel\Acumulus\Helpers\Translator;
 use Siel\Acumulus\Shop\Config;
-use Siel\Acumulus\Magento\Shop\BatchForm;
-use Siel\Acumulus\Magento\Shop\ConfigForm;
-use Siel\Acumulus\Magento\Shop\ConfigStore;
-use Siel\Acumulus\Magento\Shop\InvoiceManager;
-use Siel\Acumulus\Magento\Helpers\Log;
 
 class Siel_Acumulus_Helper_Data extends Mage_Core_Helper_Abstract {
 
-  /** @var bool */
-  protected $initialized = FALSE;
-
-  /** @var \Siel\Acumulus\Helpers\Translator */
-  protected $translator;
-
   /** @var \Siel\Acumulus\Shop\Config */
-  protected $acumulusConfig;
-
-  /** @var \Siel\Acumulus\Helpers\Form[]  */
-  protected $form;
+  protected static $acumulusConfig = NULL;
 
   /**
    * Siel_Acumulus_Helper_Data constructor.
@@ -28,7 +13,6 @@ class Siel_Acumulus_Helper_Data extends Mage_Core_Helper_Abstract {
     $this->init();
   }
 
-
   /**
    * Helper method that initializes our environment:
    * - autoloader for the library part.
@@ -36,7 +20,7 @@ class Siel_Acumulus_Helper_Data extends Mage_Core_Helper_Abstract {
    * - acumulusConfig
    */
   protected function init() {
-    if (!$this->initialized) {
+    if (!static::$acumulusConfig === NULL) {
       // Our library structure is incompatible with autoload in Magento: we
       // register our own auto loader.
       $acumulusDir = dirname(dirname(__FILE__));
@@ -44,13 +28,7 @@ class Siel_Acumulus_Helper_Data extends Mage_Core_Helper_Abstract {
         // Magento has been "compiled", use a more specific autoloader.
         require_once(dirname(__FILE__) . '/CompiledMagentoAutoLoader.php');
       }
-
-      Log::createInstance();
-      $languageCode = Mage::app()->getLocale()->getLocaleCode();
-      $this->translator = new Translator($languageCode);
-      $this->acumulusConfig = new Config(new ConfigStore(), $this->translator);
-
-      $this->initialized = TRUE;
+      static::$acumulusConfig = new Config('Magento', Mage::app()->getLocale()->getLocaleCode());
     }
   }
 
@@ -65,7 +43,7 @@ class Siel_Acumulus_Helper_Data extends Mage_Core_Helper_Abstract {
    *   could be found.
    */
   public function t($key) {
-    return $this->translator->get($key);
+    return static::$acumulusConfig->getTranslator()->get($key);
   }
 
   /**
@@ -76,28 +54,7 @@ class Siel_Acumulus_Helper_Data extends Mage_Core_Helper_Abstract {
    */
   public function getAcumulusConfig() {
     $this->init();
-    return $this->acumulusConfig;
-  }
-
-  /**
-   * @param string $formType
-   *
-   * @return \Siel\Acumulus\Helpers\Form
-   */
-  public function getForm($formType) {
-    // Get the form.
-    if (!isset($this->form[$formType])) {
-      switch ($formType) {
-        case 'batch':
-          $invoiceManager = new InvoiceManager($this->acumulusConfig, $this->translator);
-          $this->form[$formType] = new BatchForm($this->translator, $invoiceManager);
-          break;
-        case 'config':
-          $this->form[$formType] = new ConfigForm($this->translator, $this->acumulusConfig);
-          break;
-      }
-    }
-    return $this->form[$formType];
+    return static::$acumulusConfig;
   }
 
 }

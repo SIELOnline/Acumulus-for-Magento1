@@ -9,6 +9,7 @@ class Siel_Acumulus_Adminhtml_AcumulusController extends Mage_Adminhtml_Controll
    * Constructor.
    */
   protected function _construct() {
+    parent::_construct();
     $this->helper = Mage::helper('acumulus');
   }
 
@@ -26,22 +27,13 @@ class Siel_Acumulus_Adminhtml_AcumulusController extends Mage_Adminhtml_Controll
     return $this->helper->t($key);
   }
 
-  /**
-   * Getter for the shop config object central to this extension.
-   *
-   * @return \Siel\Acumulus\Shop\Config
-   */
-  protected function getAcumulusConfig() {
-    return $this->helper->getAcumulusConfig();
-  }
-
   protected function _isAllowed() {
     /** @var Mage_Admin_Model_Session $session */
     $session = Mage::getSingleton('admin/session');
     return $session->isAllowed('acumulus/acumulus_'. $this->getRequest()->getRequestedActionName() . '_form');
   }
 
-  public function formAction($formType) {
+  protected function formAction($formType) {
     $activeMenu = "acumulus/acumulus_{$formType}_form";
     $block = "siel_acumulus_block_adminhtml_form";
     $titleKey = "{$formType}_form_title";
@@ -50,7 +42,7 @@ class Siel_Acumulus_Adminhtml_AcumulusController extends Mage_Adminhtml_Controll
     $session = Mage::getSingleton('adminhtml/session');
     try {
       // Create the form first: this will load the translations.
-      $form = $this->helper->getForm($formType);
+      $form = $this->helper->getAcumulusConfig()->getForm($formType);
 
       $this->_title($this->__('System'))->_title($this->t($titleKey));
 
