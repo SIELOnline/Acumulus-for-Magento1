@@ -6,7 +6,7 @@ class Siel_Acumulus_Adminhtml_AcumulusController extends Mage_Adminhtml_Controll
   protected $helper;
 
   /**
-   * Constructor.
+   * Magento "internal constructor" not receiving any parameters.
    */
   protected function _construct() {
     parent::_construct();

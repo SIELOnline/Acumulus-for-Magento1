@@ -1,6 +1,6 @@
 <?php
 
-use Siel\Acumulus\Magento\Invoice\Source;
+use Siel\Acumulus\Invoice\Source;
 use Siel\Acumulus\Web\ConfigInterface as WebConfigInterface;
 
 class Siel_Acumulus_Model_Order_Observer extends Mage_Core_Model_Abstract {
@@ -26,9 +26,8 @@ class Siel_Acumulus_Model_Order_Observer extends Mage_Core_Model_Abstract {
     /** @var Mage_Sales_Model_Order $order */
     /** @noinspection PhpUndefinedMethodInspection */
     $order = $event->getOrder();
-    $source = new Source(Source::Order, $order);
-    $newStatus = $order->getStatus();
-    return $this->helper->getAcumulusConfig()->getManager()->sourceStatusChange($source, $newStatus) !== WebConfigInterface::Status_Exception;
+    $source = $this->helper->getAcumulusConfig()->getSource(Source::Order, $order);
+    return $this->helper->getAcumulusConfig()->getManager()->sourceStatusChange($source) !== WebConfigInterface::Status_Exception;
   }
 
   /**
@@ -44,7 +43,7 @@ class Siel_Acumulus_Model_Order_Observer extends Mage_Core_Model_Abstract {
     /** @var Mage_Sales_Model_Order_Creditmemo $creditMemo */
     /** @noinspection PhpUndefinedMethodInspection */
     $creditMemo = $event->getCreditmemo();
-    $source = new Source(Source::CreditNote, $creditMemo);
+    $source = $this->helper->getAcumulusConfig()->getSource(Source::CreditNote, $creditMemo);
     return $this->helper->getAcumulusConfig()->getManager()->sourceStatusChange($source) !== WebConfigInterface::Status_Exception;
   }
 
@@ -61,8 +60,7 @@ class Siel_Acumulus_Model_Order_Observer extends Mage_Core_Model_Abstract {
     /** @var Mage_Sales_Model_Order_Invoice $invoice */
     /** @noinspection PhpUndefinedMethodInspection */
     $invoice = $event->getInvoice();
-    $order = $invoice->getOrder();
-    $source = new Source(Source::Order, $order);
+    $source = $this->helper->getAcumulusConfig()->getSource(Source::Order, $invoice->getOrderId());
     return $this->helper->getAcumulusConfig()->getManager()->invoiceCreate($source) !== WebConfigInterface::Status_Exception;
   }
 

@@ -20,7 +20,7 @@ class Siel_Acumulus_Helper_Data extends Mage_Core_Helper_Abstract {
    * - acumulusConfig
    */
   protected function init() {
-    if (!static::$acumulusConfig === NULL) {
+    if (static::$acumulusConfig === NULL) {
       // Our library structure is incompatible with autoload in Magento: we
       // register our own auto loader.
       $acumulusDir = dirname(dirname(__FILE__));

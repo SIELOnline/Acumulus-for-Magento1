@@ -7,6 +7,9 @@
  */
 class Siel_Acumulus_Model_Resource_Entry_Collection extends Mage_Core_Model_Resource_Db_Collection_Abstract {
 
+  /**
+   * Magento "internal constructor" not receiving any parameters.
+   */
   protected function _construct() {
     $this->_init('acumulus/entry');
   }
