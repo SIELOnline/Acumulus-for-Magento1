@@ -22,10 +22,12 @@ class Siel_Acumulus_Model_Resource_Setup extends Mage_Core_Model_Resource_Setup 
       ), 'Technical key')
       ->addColumn('entry_id', Varien_Db_Ddl_Table::TYPE_INTEGER, null, array(
         'unsigned' => true,
-        'nullable' => false,
+        'nullable' => true,
+        'default' => null,
       ), 'Acumulus entry id')
       ->addColumn('token', Varien_Db_Ddl_Table::TYPE_CHAR, 32, array(
-        'nullable' => false,
+        'nullable' => true,
+        'default' => null,
       ), 'Acumulus invoice token')
       ->addColumn('source_type', Varien_Db_Ddl_Table::TYPE_VARCHAR, 20, array(
         'nullable' => false,
