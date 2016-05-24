@@ -24,7 +24,7 @@ class Siel_Acumulus_Block_Adminhtml_Form extends Mage_Adminhtml_Block_Widget_For
     $this->_removeButton('delete');
     $this->_removeButton('back');
     if ($this->formType === 'batch') {
-      $this->_updateButton('save', 'label', $this->t('button_send'));
+        $this->_updateButton('save', 'label', $this->t('button_send'));
     }
   }
 
