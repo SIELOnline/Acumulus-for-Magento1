@@ -30,7 +30,8 @@ class Siel_Acumulus_Adminhtml_AcumulusController extends Mage_Adminhtml_Controll
   protected function _isAllowed() {
     /** @var Mage_Admin_Model_Session $session */
     $session = Mage::getSingleton('admin/session');
-    return $session->isAllowed('acumulus/acumulus_'. $this->getRequest()->getRequestedActionName() . '_form');
+    $resource = $this->getRequest()->getRequestedActionName() === 'batch' ? 'batch' : 'config';
+    return $session->isAllowed('acumulus/acumulus_'. $resource . '_form');
   }
 
   protected function formAction($formType) {
@@ -65,6 +66,10 @@ class Siel_Acumulus_Adminhtml_AcumulusController extends Mage_Adminhtml_Controll
 
   public function configAction() {
     $this->formAction('config');
+  }
+
+  public function advancedAction() {
+    $this->formAction('advanced');
   }
 
   public function batchAction() {

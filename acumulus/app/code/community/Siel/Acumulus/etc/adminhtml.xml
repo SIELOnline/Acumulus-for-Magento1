@@ -10,6 +10,11 @@
           <action>adminhtml/acumulus/config</action>
           <sort_order>5</sort_order>
         </acumulus_config_form>
+        <acumulus_config_advanced_form translate="title" module="acumulus">
+          <title>Acumulus geavanceerde instellingen</title>
+          <action>adminhtml/acumulus/advanced</action>
+          <sort_order>7</sort_order>
+        </acumulus_config_advanced_form>
         <acumulus_batch_form translate="title" module="acumulus">
           <title>Verzend facturen naar Acumulus</title>
           <action>adminhtml/acumulus/batch</action>
