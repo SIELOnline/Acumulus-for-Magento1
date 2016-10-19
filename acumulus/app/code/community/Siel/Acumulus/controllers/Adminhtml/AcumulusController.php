@@ -51,6 +51,9 @@ class Siel_Acumulus_Adminhtml_AcumulusController extends Mage_Adminhtml_Controll
       foreach($form->getSuccessMessages() as $message) {
         $session->addSuccess($message);
       }
+      foreach($form->getWarningMessages() as $message) {
+        $session->addWarning($message);
+      }
       foreach($form->getErrorMessages() as $message) {
         $session->addError($message);
       }
