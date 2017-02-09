@@ -21,8 +21,22 @@ class Siel_Acumulus_Block_Adminhtml_Form_Form extends Mage_Adminhtml_Block_Widge
     parent::__construct($attributes);
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  protected function _prepareLayout() {
+    /** @var Mage_Page_Block_Html_Head $head */
+    if ($head = $this->getLayout()->getBlock('head')) {
+      $head->addCss('siel-acumulus-config-form.css');
+    }
+    return parent::_prepareLayout();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   protected function _prepareForm() {
-    $acumulusForm = $this->helper-> getAcumulusConfig()->getForm($this->formType);
+    $acumulusForm = $this->helper->getAcumulusConfig()->getForm($this->formType);
     $form = new Varien_Data_Form();
     $mapper = new FormMapper();
     $mapper->map($form, $acumulusForm->getFields());
@@ -32,8 +46,6 @@ class Siel_Acumulus_Block_Adminhtml_Form_Form extends Mage_Adminhtml_Block_Widge
     $form->setAction($this->getUrl("*/*/{$this->formType}"));
     /** @noinspection PhpUndefinedMethodInspection */
     $form->setMethod('post');
-    /** @noinspection PhpUndefinedMethodInspection */
-    $form->setUseContainer(true);
     $form->setId('edit_form');
     $this->setForm($form);
 
