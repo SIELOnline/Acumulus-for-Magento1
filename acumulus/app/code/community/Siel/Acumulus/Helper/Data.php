@@ -28,7 +28,7 @@ class Siel_Acumulus_Helper_Data extends Mage_Core_Helper_Abstract {
         // Magento has been "compiled", use a more specific autoloader.
         require_once(dirname(__FILE__) . '/CompiledMagentoAutoLoader.php');
       }
-      static::$acumulusConfig = new Config('Magento', Mage::app()->getLocale()->getLocaleCode());
+      static::$acumulusConfig = new Config('Magento\\Magento1', Mage::app()->getLocale()->getLocaleCode());
     }
   }
 

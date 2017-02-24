@@ -1,4 +1,20 @@
-.property-name strong{
+input[type=radio] {
+  float: left;
+  clear: both;
+  margin-top: 0.2em;
+}
+
+.value label.inline {
+  float: left !important;
+  max-width: 95%;
+  padding-left: 1em;
+}
+
+.note {
+  clear: both;
+}
+
+.property-name strong {
   font-size: larger;
   font-weight: 700;
 }

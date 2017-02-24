@@ -2,8 +2,8 @@
 
 /**
  * Class Siel_Acumulus_Model_Entry Acumulus is used by
- * Siel\Acumulus\Shop\Magento\AcumulusEntryModel to access the entry table from
- * the database.
+ * Siel\Acumulus\Shop\Magento\Magento1\AcumulusEntryModel to access the entry
+ * table from the database.
  *
  * @method $this setEntryId(int $value)
  * @method int getEntryId()
