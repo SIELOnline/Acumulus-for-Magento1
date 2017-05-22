@@ -67,7 +67,7 @@ $tableName = $installer->getTable('acumulus/entry');
 $oldTableName = $tableName . '_old';
 
 // Rename current table.
-$connection->renameTablesBatch(array(array('oldName' => $tableName, 'newName' => $oldTableName)));
+$connection->renameTable($tableName, $oldTableName);
 
 // Create new table.
 $table = $installer->getTableDefinition();
