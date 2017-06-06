@@ -1,10 +1,11 @@
 <?php
-use Siel\Acumulus\Shop\Config;
+
+use Siel\Acumulus\Helpers\Container;
 
 class Siel_Acumulus_Helper_Data extends Mage_Core_Helper_Abstract {
 
-  /** @var \Siel\Acumulus\Shop\Config */
-  protected static $acumulusConfig = NULL;
+  /** @var \Siel\Acumulus\Helpers\ContainerInterface */
+  protected static $acumulusContainer = NULL;
 
   /**
    * Siel_Acumulus_Helper_Data constructor.
@@ -20,7 +21,7 @@ class Siel_Acumulus_Helper_Data extends Mage_Core_Helper_Abstract {
    * - acumulusConfig
    */
   protected function init() {
-    if (static::$acumulusConfig === NULL) {
+    if (static::$acumulusContainer === NULL) {
       // Our library structure is incompatible with autoload in Magento: we
       // register our own auto loader.
       $acumulusDir = dirname(dirname(__FILE__));
@@ -28,7 +29,7 @@ class Siel_Acumulus_Helper_Data extends Mage_Core_Helper_Abstract {
         // Magento has been "compiled", use a more specific autoloader.
         require_once(dirname(__FILE__) . '/CompiledMagentoAutoLoader.php');
       }
-      static::$acumulusConfig = new Config('Magento\\Magento1', Mage::app()->getLocale()->getLocaleCode());
+      static::$acumulusContainer = new Container('Magento\\Magento1', Mage::app()->getLocale()->getLocaleCode());
     }
   }
 
@@ -43,18 +44,18 @@ class Siel_Acumulus_Helper_Data extends Mage_Core_Helper_Abstract {
    *   could be found.
    */
   public function t($key) {
-    return static::$acumulusConfig->getTranslator()->get($key);
+    return static::$acumulusContainer->getTranslator()->get($key);
   }
 
   /**
    * Returns the configuration settings object central to this extension.
    *
-   * @return \Siel\Acumulus\Shop\Config
+   * @return \Siel\Acumulus\Helpers\ContainerInterface
    *   The Acumulus config.
    */
-  public function getAcumulusConfig() {
+  public function getAcumulusContainer() {
     $this->init();
-    return static::$acumulusConfig;
+    return static::$acumulusContainer;
   }
 
 }

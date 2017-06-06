@@ -26,8 +26,8 @@ class Siel_Acumulus_Model_Order_Observer extends Mage_Core_Model_Abstract {
     /** @var Mage_Sales_Model_Order $order */
     /** @noinspection PhpUndefinedMethodInspection */
     $order = $event->getOrder();
-    $source = $this->helper->getAcumulusConfig()->getSource(Source::Order, $order);
-    return $this->helper->getAcumulusConfig()->getManager()->sourceStatusChange($source) !== WebConfigInterface::Status_Exception;
+    $source = $this->helper->getAcumulusContainer()->getSource(Source::Order, $order);
+    return $this->helper->getAcumulusContainer()->getManager()->sourceStatusChange($source) !== WebConfigInterface::Status_Exception;
   }
 
   /**
@@ -43,8 +43,8 @@ class Siel_Acumulus_Model_Order_Observer extends Mage_Core_Model_Abstract {
     /** @var Mage_Sales_Model_Order_Creditmemo $creditMemo */
     /** @noinspection PhpUndefinedMethodInspection */
     $creditMemo = $event->getCreditmemo();
-    $source = $this->helper->getAcumulusConfig()->getSource(Source::CreditNote, $creditMemo);
-    return $this->helper->getAcumulusConfig()->getManager()->sourceStatusChange($source) !== WebConfigInterface::Status_Exception;
+    $source = $this->helper->getAcumulusContainer()->getSource(Source::CreditNote, $creditMemo);
+    return $this->helper->getAcumulusContainer()->getManager()->sourceStatusChange($source) !== WebConfigInterface::Status_Exception;
   }
 
   /**
@@ -60,8 +60,8 @@ class Siel_Acumulus_Model_Order_Observer extends Mage_Core_Model_Abstract {
     /** @var Mage_Sales_Model_Order_Invoice $invoice */
     /** @noinspection PhpUndefinedMethodInspection */
     $invoice = $event->getInvoice();
-    $source = $this->helper->getAcumulusConfig()->getSource(Source::Order, $invoice->getOrderId());
-    return $this->helper->getAcumulusConfig()->getManager()->invoiceCreate($source) !== WebConfigInterface::Status_Exception;
+    $source = $this->helper->getAcumulusContainer()->getSource(Source::Order, $invoice->getOrderId());
+    return $this->helper->getAcumulusContainer()->getManager()->invoiceCreate($source) !== WebConfigInterface::Status_Exception;
   }
 
 }

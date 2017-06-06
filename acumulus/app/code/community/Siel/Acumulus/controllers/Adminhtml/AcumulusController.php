@@ -43,7 +43,7 @@ class Siel_Acumulus_Adminhtml_AcumulusController extends Mage_Adminhtml_Controll
     $session = Mage::getSingleton('adminhtml/session');
     try {
       // Create the form first: this will load the translations.
-      $form = $this->helper->getAcumulusConfig()->getForm($formType);
+      $form = $this->helper->getAcumulusContainer()->getForm($formType);
 
       $this->_title($this->__('System'))->_title($this->t($titleKey));
 

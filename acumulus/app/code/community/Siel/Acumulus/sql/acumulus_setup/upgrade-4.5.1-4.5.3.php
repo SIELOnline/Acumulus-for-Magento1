@@ -6,6 +6,6 @@ $installer->startSetup();
 
 /** @var Siel_Acumulus_Helper_Data $helper */
 $helper = Mage::helper('acumulus');
-$helper->getAcumulusConfig()->upgrade('4.5.1');
+$helper->getAcumulusContainer()->getConfig()->upgrade('4.5.1');
 
 $installer->endSetup();

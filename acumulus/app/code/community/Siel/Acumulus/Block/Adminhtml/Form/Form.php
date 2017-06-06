@@ -1,7 +1,5 @@
 <?php
 
-use Siel\Acumulus\Magento\Magento1\Helpers\FormMapper;
-
 class Siel_Acumulus_Block_Adminhtml_Form_Form extends Mage_Adminhtml_Block_Widget_Form {
 
   /** @var Siel_Acumulus_Helper_Data */
@@ -36,10 +34,11 @@ class Siel_Acumulus_Block_Adminhtml_Form_Form extends Mage_Adminhtml_Block_Widge
    * {@inheritdoc}
    */
   protected function _prepareForm() {
-    $acumulusForm = $this->helper->getAcumulusConfig()->getForm($this->formType);
+    $acumulusForm = $this->helper->getAcumulusContainer()->getForm($this->formType);
     $form = new Varien_Data_Form();
-    $mapper = new FormMapper();
-    $mapper->map($form, $acumulusForm->getFields());
+    /** @var \Siel\Acumulus\Magento\Helpers\FormMapper $mapper */
+    $mapper = $this->helper->getAcumulusContainer()->getFormMapper();
+    $mapper->setMagentoForm($form)->map($acumulusForm);
 
     $form->setValues($acumulusForm->getFormValues());
     /** @noinspection PhpUndefinedMethodInspection */

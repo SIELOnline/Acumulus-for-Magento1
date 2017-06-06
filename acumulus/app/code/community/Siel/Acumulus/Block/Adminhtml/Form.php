@@ -19,7 +19,9 @@ class Siel_Acumulus_Block_Adminhtml_Form extends Mage_Adminhtml_Block_Widget_For
 
     parent::__construct();
 
+    /** @noinspection PhpUndefinedFieldInspection */
     $this->_blockGroup = 'acumulus';
+    /** @noinspection PhpUndefinedFieldInspection */
     $this->_controller = 'adminhtml_form';
     $this->_removeButton('delete');
     $this->_removeButton('back');
