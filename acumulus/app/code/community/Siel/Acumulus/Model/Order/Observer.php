@@ -1,7 +1,6 @@
 <?php
 
 use Siel\Acumulus\Invoice\Source;
-use Siel\Acumulus\Config\ConfigInterface;
 
 class Siel_Acumulus_Model_Order_Observer extends Mage_Core_Model_Abstract {
 
@@ -27,7 +26,8 @@ class Siel_Acumulus_Model_Order_Observer extends Mage_Core_Model_Abstract {
     /** @noinspection PhpUndefinedMethodInspection */
     $order = $event->getOrder();
     $source = $this->helper->getAcumulusContainer()->getSource(Source::Order, $order);
-    return $this->helper->getAcumulusContainer()->getManager()->sourceStatusChange($source) !== ConfigInterface::Status_Exception;
+    $result = $this->helper->getAcumulusContainer()->getManager()->sourceStatusChange($source);
+    return $result->getException() === null;
   }
 
   /**
@@ -44,7 +44,8 @@ class Siel_Acumulus_Model_Order_Observer extends Mage_Core_Model_Abstract {
     /** @noinspection PhpUndefinedMethodInspection */
     $creditMemo = $event->getCreditmemo();
     $source = $this->helper->getAcumulusContainer()->getSource(Source::CreditNote, $creditMemo);
-    return $this->helper->getAcumulusContainer()->getManager()->sourceStatusChange($source) !== ConfigInterface::Status_Exception;
+    $result = $this->helper->getAcumulusContainer()->getManager()->sourceStatusChange($source);
+    return $result->getException() === null;
   }
 
   /**
@@ -61,7 +62,8 @@ class Siel_Acumulus_Model_Order_Observer extends Mage_Core_Model_Abstract {
     /** @noinspection PhpUndefinedMethodInspection */
     $invoice = $event->getInvoice();
     $source = $this->helper->getAcumulusContainer()->getSource(Source::Order, $invoice->getOrderId());
-    return $this->helper->getAcumulusContainer()->getManager()->invoiceCreate($source) !== ConfigInterface::Status_Exception;
+    $result = $this->helper->getAcumulusContainer()->getManager()->invoiceCreate($source);
+    return $result->getException() === null;
   }
 
 }
