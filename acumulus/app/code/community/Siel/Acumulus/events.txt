@@ -2,13 +2,13 @@ Acumulus module events
 =======================
 
 Warning
--------
+=======
 The events are experimental. Depending on feedback from actual usage, details
 may change in future versions!
 
 
 Introduction
-------------
+============
 This file documents the events that the Acumulus module defines. Currently, 3
 events are defined:
 - acumulus_invoice_created
@@ -43,11 +43,11 @@ this is also already done by this module itself.
 
 
 acumulus_invoice_created
-------------------------
+========================
 
 Usage
 -----
-When the "acumulus_invoice_created" event is called, it is passed 2 arguments:
+When the "acumulus_invoice_created" event is called, it is passed 3 arguments:
 - invoice:
   [Note: To allow an observer to change the invoice it is packed in a
    transportObject, see the example below to see how to get and change the
@@ -73,17 +73,19 @@ When the "acumulus_invoice_created" event is called, it is passed 2 arguments:
   The following keys may be filled with a null value, if the 'unitprice' of that
   'line' = 0. These null values will be replaced by the module by the most
   occurring vat rate before the actual sending takes place:
-  - ['customer']['invoice']['line']['taxrate']
-- source: The Acumulus \Siel\Acumulus\Invoice\Source object that is the base of
-  the invoice to be sent.
+  - ['customer']['invoice']['line']['vatrate']
+- source: The Acumulus \Siel\Acumulus\Invoice\Source object that wraps the base
+  Order or CreditNote of the invoice to be sent.
+- localResult: A \Siel\Acumulus\Invoice\Result object that at this stage can
+  only contain local warnings (and errors).
 
 
 acumulus_invoice_completed
---------------------------
+==========================
 
 Usage
 -----
-When the "acumulus_invoice_completed" event is called, it is passed 2 arguments:
+When the "acumulus_invoice_completed" event is called, it is passed 3 arguments:
 - invoice:
   [Note: To allow an observer to change the invoice it is packed in a
    transportObject, see the example below to see how to get and change the
@@ -93,8 +95,10 @@ When the "acumulus_invoice_completed" event is called, it is passed 2 arguments:
   https://apidoc.sielsystems.nl/content/invoice-add, though at this stage, only
   the customer key will be present at the highest level. The line tag is
   represented as a numeric array of lines, even if if there is only 1 line.
-- source: The Acumulus \Siel\Acumulus\Invoice\Source object that is the base of
-  the invoice to be sent.
+- source: The Acumulus \Siel\Acumulus\Invoice\Source object that wraps the base
+  Order or CreditNote of the invoice to be sent.
+- localResult: A \Siel\Acumulus\Invoice\Result object that at this stage can
+  only contain local warnings (and errors).
 
 
 Example
@@ -154,22 +158,22 @@ class My_Module_Model_Acumulus_Observer extends Mage_Core_Model_Abstract {
 
 
 acumulus_invoice_sent
----------------------
+=====================
 
 Usage
 -----
-When the "acumulus_invoice_sent" event is called, it is passed 2 arguments:
+When the "acumulus_invoice_sent" event is called, it is passed 3 arguments:
 - invoice:
   A keyed array containing the invoice that will be sent to Acumulus. The array
   structure is similar to the XML structure as defined on
   https://apidoc.sielsystems.nl/content/invoice-add, though at this stage, only
   the customer key will be present at the highest level. The line tag is
   represented as a numeric array of lines, even if if there is only 1 line.
-- source: The Acumulus \Siel\Acumulus\Invoice\Source object that is the base of
-  the invoice to be sent.
-- result: An array that contains the information as sent back by Acumulus, see
+- source: The Acumulus \Siel\Acumulus\Invoice\Source object that wraps the base
+  Order or CreditNote of the invoice to be sent.
+- result: A \Siel\Acumulus\Invoice\Result object that contains a.o. any warnings,
+  errors and exceptions as well as the result as sent back by Acumulus, see
   https://apidoc.sielsystems.nl/content/invoice-add.
-
 
 Example
 -------
@@ -225,6 +229,6 @@ class My_Module_Model_Acumulus_Observer extends Mage_Core_Model_Abstract {
 }
 
 External Resources
-------------------
+==================
 - https://apidoc.sielsystems.nl/content/invoice-add.
 - https://apidoc.sielsystems.nl/content/warning-error-and-status-response-section-most-api-calls
