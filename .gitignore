@@ -10,11 +10,14 @@ interdiff.txt
 # PHPStorm
 .idea/*
 
-# Ignore library
-**/libraries
-
 # Shared files
-**/Siel/Acumulus/changelog.txt
-**/Siel/Acumulus/license.txt
-**/Siel/Acumulus/licentie-nl.pdf
-**/Siel/Acumulus/leesmij.txt
+**/changelog.txt
+**/license.txt
+**/licentie-nl.pdf
+acumulus/app/code/community/Siel/Acumulus/leesmij.txt
+
+# Generated files
+**/user-guide.pdf
+
+# Ignore library
+**/lib/
