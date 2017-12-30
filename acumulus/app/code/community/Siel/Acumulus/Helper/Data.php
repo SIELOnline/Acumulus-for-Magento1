@@ -4,6 +4,13 @@ use Siel\Acumulus\Helpers\Container;
 
 class Siel_Acumulus_Helper_Data extends Mage_Core_Helper_Abstract {
 
+  /**
+   * The directory where the library can be found in non-compiled mode.
+   *
+   * @var string
+   */
+  protected $baseDir;
+
   /** @var \Siel\Acumulus\Helpers\ContainerInterface */
   protected static $acumulusContainer = NULL;
 
@@ -22,16 +29,25 @@ class Siel_Acumulus_Helper_Data extends Mage_Core_Helper_Abstract {
    */
   protected function init() {
     if (static::$acumulusContainer === NULL) {
+      $this->baseDir = MAGENTO_ROOT . '/app/code/community/Siel/Acumulus/lib/siel/acumulus/src';
       // Our library structure is incompatible with autoload in Magento: we
       // register our own auto loader.
-      $srcDir = __DIR__ . '/../lib/siel/acumulus/src/';
-      if (!is_dir($srcDir)) {
-        // Magento has been "compiled", use a more specific autoloader.
-        $srcDir = __DIR__ . DIRECTORY_SEPARATOR . 'Siel_Acumulus_lib_siel_acumulus_src' . DIRECTORY_SEPARATOR;
-      }
-      $this->registerSielAutoloader($srcDir);
+      $this->registerSielAutoloader();
       static::$acumulusContainer = new Container('Magento\\Magento1', Mage::app()->getLocale()->getLocaleCode());
+      if ($this->isCompiled()) {
+          static::$acumulusContainer->setBaseDir($this->baseDir);
+      }
     }
+  }
+
+  /**
+   * Returns whether Magento runs in compiled mode.
+   *
+   * @return bool
+   *   True if Magento runs in compiled mode, false otherwise.
+   */
+  protected function isCompiled() {
+      return defined('COMPILER_INCLUDE_PATH');
   }
 
   /**
@@ -68,33 +84,34 @@ class Siel_Acumulus_Helper_Data extends Mage_Core_Helper_Abstract {
    * function should be loaded during bootstrapping of the module.
    *
    * Thanks to https://gist.github.com/mageekguy/8300961
-   *
-   * @param string $dir
-   *   The PSR4 root directory where the classes from the Siel\Acumulus
-   *   namespace can be found. Should include a directory separator at the
-   *   end.
    */
-  private function registerSielAutoloader($dir) {
-    $our_namespace = 'Siel\\Acumulus\\';
-    $ourNamespaceLen = strlen($our_namespace);
-    spl_autoload_register(
-      function ($class) use ($our_namespace, $ourNamespaceLen, $dir) {
-        if (strncmp($class, $our_namespace, $ourNamespaceLen) === 0) {
-          $fileName = $dir . str_replace('\\', DIRECTORY_SEPARATOR, substr($class, $ourNamespaceLen)) . '.php';
-          // Checking if the file exists prevent warnings in OpenCart1 where
-          // using just @include(...) did not help prevent them.
-          if (is_readable($fileName)) {
-            /** @noinspection PhpIncludeInspection */
-            include($fileName);
-          }
+  private function registerSielAutoloader() {
+    if ($this->isCompiled()) {
+      // Magento has been "compiled" to the includes/src directory.
+      $filePrefix = COMPILER_INCLUDE_PATH . DIRECTORY_SEPARATOR . 'Siel_Acumulus_lib_siel_acumulus_src_';
+      $replace = '_';
+    }
+    else {
+      // Magento has not been compiled: classes can be found in their default
+      // place.
+      $filePrefix = $this->baseDir . DIRECTORY_SEPARATOR;
+      $replace = DIRECTORY_SEPARATOR;
+    }
+
+    $ourNamespace = 'Siel\\Acumulus\\';
+    $ourNamespaceLen = strlen($ourNamespace);
+    $autoload_function = function ($class) use ($ourNamespace, $ourNamespaceLen, $filePrefix, $replace) {
+      if (strncmp($class, $ourNamespace, $ourNamespaceLen) === 0) {
+        $fileName = $filePrefix . str_replace('\\', $replace, substr($class, $ourNamespaceLen)) . '.php';
+        if (is_readable($fileName)) {
+          /** @noinspection PhpIncludeInspection */
+          include($fileName);
         }
-      },
-      // Do not throw an exception, we only load our own classes, so other
-      // autoloaders may be registered as well.
-      false,
-      // Prepend this autoloader: it will not throw, nor warn, while the shop
-      // specific autoloader might do so.
-      true);
+      }
+    };
+    // Prepend this autoloader: it will not throw, nor warn, while the shop
+    // specific autoloader might do so.
+    spl_autoload_register($autoload_function, true, true);
   }
 
 }
