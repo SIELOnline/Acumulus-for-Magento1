@@ -89,29 +89,28 @@ class Siel_Acumulus_Helper_Data extends Mage_Core_Helper_Abstract {
     if ($this->isCompiled()) {
       // Magento has been "compiled" to the includes/src directory.
       $filePrefix = COMPILER_INCLUDE_PATH . DIRECTORY_SEPARATOR . 'Siel_Acumulus_lib_siel_acumulus_src_';
-      $replace = '_';
+      $ourNamespace = 'Siel\\Acumulus\\';
+      $ourNamespaceLen = strlen($ourNamespace);
+      $autoloadFunction = function ($class) use ($ourNamespace, $ourNamespaceLen, $filePrefix) {
+        if (strncmp($class, $ourNamespace, $ourNamespaceLen) === 0) {
+          $fileName = $filePrefix . str_replace('\\', '_', substr($class, $ourNamespaceLen)) . '.php';
+          if (is_readable($fileName)) {
+            /** @noinspection PhpIncludeInspection */
+            include($fileName);
+          }
+        }
+      };
+      // Prepend this autoloader: it will not throw, nor warn, while the shop
+      // specific autoloader might do so.
+      spl_autoload_register($autoloadFunction, true, true);
     }
     else {
       // Magento has not been compiled: classes can be found in their default
       // place.
-      $filePrefix = $this->baseDir . DIRECTORY_SEPARATOR;
-      $replace = DIRECTORY_SEPARATOR;
+      /** @noinspection PhpIncludeInspection */
+      require_once($this->baseDir . '/../SielAcumulusAutoloader.php');
+      SielAcumulusAutoloader::register();
     }
-
-    $ourNamespace = 'Siel\\Acumulus\\';
-    $ourNamespaceLen = strlen($ourNamespace);
-    $autoload_function = function ($class) use ($ourNamespace, $ourNamespaceLen, $filePrefix, $replace) {
-      if (strncmp($class, $ourNamespace, $ourNamespaceLen) === 0) {
-        $fileName = $filePrefix . str_replace('\\', $replace, substr($class, $ourNamespaceLen)) . '.php';
-        if (is_readable($fileName)) {
-          /** @noinspection PhpIncludeInspection */
-          include($fileName);
-        }
-      }
-    };
-    // Prepend this autoloader: it will not throw, nor warn, while the shop
-    // specific autoloader might do so.
-    spl_autoload_register($autoload_function, true, true);
   }
 
 }
