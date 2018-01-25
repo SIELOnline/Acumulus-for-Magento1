@@ -4,19 +4,8 @@ interdiff.txt
 *.orig
 *.bak
 
-# releases
-*.zip
-
 # PHPStorm
 .idea/*
 
-# Shared files
-**/license.txt
-**/licentie-nl.pdf
-acumulus/app/code/community/Siel/Acumulus/leesmij.txt
-
-# Generated files
-**/user-guide.pdf
-
-# Ignore library
-**/lib/
+# releases
+*.zip
