@@ -18,6 +18,8 @@ class Siel_Acumulus_Model_Order_Observer extends Mage_Core_Model_Abstract {
    * @param Varien_Event_Observer $observer
    *
    * @return bool
+   *
+   * @throws \Varien_Exception
    */
   public function orderSaveAfter(Varien_Event_Observer $observer) {
     /** @var Varien_Event $event */
@@ -36,6 +38,8 @@ class Siel_Acumulus_Model_Order_Observer extends Mage_Core_Model_Abstract {
    * @param Varien_Event_Observer $observer
    *
    * @return bool
+   *
+   * @throws \Varien_Exception
    */
   public function creditMemoSaveAfter(Varien_Event_Observer $observer) {
     /** @var Varien_Event $event */
@@ -54,6 +58,8 @@ class Siel_Acumulus_Model_Order_Observer extends Mage_Core_Model_Abstract {
    * @param Varien_Event_Observer $observer
    *
    * @return bool
+   *
+   * @throws \Varien_Exception
    */
   public function invoiceSaveAfter(Varien_Event_Observer $observer) {
     /** @var Varien_Event $event */

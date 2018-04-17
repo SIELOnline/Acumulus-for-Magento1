@@ -11,7 +11,7 @@ class Siel_Acumulus_Helper_Data extends Mage_Core_Helper_Abstract {
    */
   protected $baseDir;
 
-  /** @var \Siel\Acumulus\Helpers\ContainerInterface */
+  /** @var \Siel\Acumulus\Helpers\Container */
   protected static $acumulusContainer = NULL;
 
   /**
@@ -67,7 +67,7 @@ class Siel_Acumulus_Helper_Data extends Mage_Core_Helper_Abstract {
   /**
    * Returns the configuration settings object central to this extension.
    *
-   * @return \Siel\Acumulus\Helpers\ContainerInterface
+   * @return \Siel\Acumulus\Helpers\Container
    *   The Acumulus config.
    */
   public function getAcumulusContainer() {

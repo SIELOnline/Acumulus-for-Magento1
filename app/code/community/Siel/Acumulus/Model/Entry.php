@@ -36,6 +36,8 @@ class Siel_Acumulus_Model_Entry extends Mage_Core_Model_Abstract {
      * (http://stackoverflow.com/a/17498167/1475662).
      *
      * @return $this
+     *
+     * @throws \Exception
      */
     public function save() {
         $this
