@@ -48,6 +48,9 @@ class Siel_Acumulus_Adminhtml_AcumulusController extends Mage_Adminhtml_Controll
       $this->_title($this->__('System'))->_title($this->t($titleKey));
 
       $form->process();
+      // Force the creation of the fields to get connection error messages
+      // shown.
+      $form->getFields();
       foreach($form->getSuccessMessages() as $message) {
         $session->addSuccess($message);
       }

@@ -11,6 +11,7 @@ class Siel_Acumulus_Model_Resource_Setup extends Mage_Core_Model_Resource_Setup 
    * Called by the install script and the update script.
    *
    * @return Varien_Db_Ddl_Table
+   * @throws \Zend_Db_Exception
    */
   public function getTableDefinition() {
     $table = $this->getConnection()->newTable($this->getTable('acumulus/entry'))

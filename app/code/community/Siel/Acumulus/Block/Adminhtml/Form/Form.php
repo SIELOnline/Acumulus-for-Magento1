@@ -42,10 +42,13 @@ class Siel_Acumulus_Block_Adminhtml_Form_Form extends Mage_Adminhtml_Block_Widge
 
     $form->setValues($acumulusForm->getFormValues());
     /** @noinspection PhpUndefinedMethodInspection */
+    /** @noinspection PhpUnhandledExceptionInspection */
     $form->setAction($this->getUrl("*/*/{$this->formType}"));
     /** @noinspection PhpUndefinedMethodInspection */
+    /** @noinspection PhpUnhandledExceptionInspection */
     $form->setMethod('post');
     /** @noinspection PhpUndefinedMethodInspection */
+    /** @noinspection PhpUnhandledExceptionInspection */
     $form->setUseContainer(true);
     $form->setId('edit_form');
     $this->setForm($form);
