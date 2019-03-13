@@ -2,7 +2,7 @@
 <config>
   <modules>
     <Siel_Acumulus>
-      <version>5.5.1</version>
+      <version>5.6.0</version>
     </Siel_Acumulus>
   </modules>
 
@@ -84,6 +84,16 @@
           </Siel_Acumulus_order_observer>
         </observers>
       </sales_order_creditmemo_save_after>
+
+      <acumulus_invoice_created>
+        <observers>
+          <Siel_Acumulus_acumulus_observer>
+            <type>singleton</type>
+            <class>acumulus/acumulus_observer</class>
+            <method>acunulusInvoiceCreated</method>
+          </Siel_Acumulus_acumulus_observer>
+        </observers>
+      </acumulus_invoice_created>
     </events>
   </global>
 
