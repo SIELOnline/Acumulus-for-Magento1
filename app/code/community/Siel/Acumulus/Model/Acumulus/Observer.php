@@ -62,13 +62,6 @@ class Siel_Acumulus_Model_Acumulus_Observer extends Mage_Core_Model_Abstract {
           Meta::LineType => Creator::LineType_PaymentFee,
         );
         $invoice['customer']['invoice']['line'][] = $line;
-
-        // @todo: is this necessary?
-//        // Add these amounts to the invoice totals.
-//        // @see \Siel\Acumulus\Magento\Invoice\Source::getAvailableTotals()
-//        $invoice['customer']['invoice'][Meta::InvoiceAmountInc] += $paymentInc;
-//        $invoice['customer']['invoice'][Meta::InvoiceVatAmount] += $paymentVat;
-
       }
     }
   }
